@@ -24,7 +24,7 @@ module DissociatedIntrospection
     private
 
     def _get_class
-      modified_class_str = ruby_class_source.modify_parent_class(parent_class_replacement)
+      modified_class_str = parsed_source.modify_parent_class(parent_class_replacement)
       load_sandbox(OpenStruct.new(read: modified_class_str, path: file.path))
     end
 
