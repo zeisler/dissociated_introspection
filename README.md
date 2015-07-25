@@ -1,4 +1,5 @@
 # Dissociated Introspection
+[![Build Status](https://travis-ci.org/zeisler/dissociated_introspection.svg?branch=master)](https://travis-ci.org/zeisler/dissociated_introspection)
 
 Introspect methods, parameters, class macros, and constants without loading a parent class or any other dependencies.
 
