@@ -16,8 +16,8 @@ RSpec.describe DissociatedIntrospection::Inspection do
         RUBY
       }
 
-      it "#class_name" do
-        expect(described_class.new(file: file).class_name).to eq("MyClass")
+      it "#ruby_class_source#class_name" do
+        expect(described_class.new(file: file).parsed_source.class_name).to eq("MyClass")
       end
 
       it "get_class" do
@@ -42,7 +42,7 @@ RSpec.describe DissociatedIntrospection::Inspection do
       }
 
       it "#class_name" do
-        expect(described_class.new(file: file).class_name).to eq("TheClass")
+        expect(described_class.new(file: file).parsed_source.class_name).to eq("TheClass")
       end
 
       it 'intercepts class macros' do
