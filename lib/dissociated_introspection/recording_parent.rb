@@ -3,25 +3,24 @@ module DissociatedIntrospection
     class << self
 
       def method_missing(m, *args, &block)
-        __missing_class_macros__.push({ m => [args, block] })
+        __missing_class_macros__.push({ m => [args, block].compact })
       end
 
       def __missing_class_macros__
         @__missing_class_macros__ ||= []
       end
 
-      def attr_reader(*args)
-        __missing_class_macros__.push({ __method__ => [args, nil] })
+      def listen_to_defined_macros(*methods)
+        methods.each do |m|
+          module_eval(<<-RUBY, __FILE__)
+            def self.#{m}(*args, &block)
+              __missing_class_macros__.push({ __method__ => [args, block].compact })
+            end
+          RUBY
+        end
       end
-
-      def attr_writer(*args)
-        __missing_class_macros__.push({ __method__ => [args, nil] })
-      end
-
-      def attr_accessor(*args)
-        __missing_class_macros__.push({ __method__ => [args, nil] })
-      end
-
     end
+
+    listen_to_defined_macros :attr_reader, :attr_writer, :attr_accessor
   end
 end

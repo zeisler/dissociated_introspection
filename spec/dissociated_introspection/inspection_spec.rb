@@ -12,6 +12,7 @@ RSpec.describe DissociatedIntrospection::Inspection do
         attr_writer :foo, :bar
         attr_reader :foo
         attr_accessor :baz
+
       end
         RUBY
       }
@@ -25,9 +26,34 @@ RSpec.describe DissociatedIntrospection::Inspection do
       end
 
       it 'intercepts class macros' do
-        expect(described_class.new(file: file).class_macros).to eq([{ :attr_writer => [[:foo, :bar], nil] },
-                                                                    { :attr_reader => [[:foo], nil] },
-                                                                    { :attr_accessor => [[:baz], nil] }])
+        expect(described_class.new(file: file).class_macros).to eq([{ :attr_writer => [[:foo, :bar]] },
+                                                                    { :attr_reader => [[:foo]] },
+                                                                    { :attr_accessor => [[:baz]] }])
+      end
+    end
+
+    describe "method that takes a block" do
+      let(:ruby_class) {
+        <<-RUBY
+      class MyClass < OtherClass
+        i_take_a_block(:hello) do
+          'hi'
+        end
+      end
+        RUBY
+      }
+
+      it 'first arg' do
+        expect(described_class.new(file: file).class_macros[0][:i_take_a_block][0]).to eq([:hello])
+
+      end
+
+      it 'block' do
+        expect(described_class.new(file: file).class_macros[0][:i_take_a_block][1].class).to eq(Proc)
+      end
+
+      it 'proc will execute' do
+        expect(described_class.new(file: file).class_macros[0][:i_take_a_block][1].call).to eq('hi')
       end
     end
 
@@ -46,8 +72,8 @@ RSpec.describe DissociatedIntrospection::Inspection do
       end
 
       it 'intercepts class macros' do
-        expect(described_class.new(file: file).class_macros).to eq([{ class_macro: [[:foo, :bar], nil] },
-                                                                    { another_method: [[:bax], nil] }])
+        expect(described_class.new(file: file).class_macros).to eq([{ class_macro: [[:foo, :bar]] },
+                                                                    { another_method: [[:bax]] }])
       end
     end
   end
