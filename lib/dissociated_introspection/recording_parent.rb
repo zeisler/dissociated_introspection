@@ -1,5 +1,5 @@
 module DissociatedIntrospection
-  class RecordingParent
+  class RecordingParent < BasicObject
     class << self
 
       def method_missing(m, *args, &block)
@@ -20,7 +20,7 @@ module DissociatedIntrospection
         end
       end
     end
-
+    
     listen_to_defined_macros :attr_reader, :attr_writer, :attr_accessor
   end
 end
