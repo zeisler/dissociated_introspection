@@ -21,7 +21,6 @@ module DissociatedIntrospection
       end
     end
 
-    attr_reader
     listen_to_defined_macros :attr_reader, :attr_writer, :attr_accessor, :prepend, :include, :extend
   end
 end
