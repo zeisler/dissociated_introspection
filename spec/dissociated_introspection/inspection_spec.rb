@@ -68,7 +68,6 @@ RSpec.describe DissociatedIntrospection::Inspection do
 
       it 'include' do
         expect(described_class.new(file: file).class_macros[0][:include][0][0].name).to match(/MyClass::MyModule/)
-        expect(described_class.new(file: file).class_macros[0]).to match(/MyClass::MyModule/)
       end
 
       it 'extend' do
