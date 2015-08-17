@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
 
   spec.summary       = %q{Introspect methods, parameters, class macros, and constants without loading a parent class or any other dependencies.}
   spec.description   = %q{Introspect methods, parameters, class macros, and constants without loading a parent class or any other dependencies.}
-  spec.homepage      = "TODO: Put your gem's website or public repo URL here."
+  spec.homepage      = "https://github.com/zeisler/dissociated_introspection"
   spec.license       = "MIT"
 
   # Prevent pushing this gem to RubyGems.org by setting 'allowed_push_host', or
