@@ -13,6 +13,10 @@ describe ActiveSupport::Try do
     it "does respond to method" do
       expect({key1: 'value1'}.try(:keys)).to eq [:key1]
     end
+
+    it "takes a block" do
+      expect({ key1: 'value1' }.try{ keys }).to eq [:key1]
+    end
   end
 
   describe "Delegator.try" do
