@@ -17,6 +17,18 @@ describe ActiveSupport::Try do
     it "takes a block" do
       expect({ key1: 'value1' }.try{ keys }).to eq [:key1]
     end
+
+    it "Arguments and blocks are forwarded to the method if invoked" do
+      expect([1, 2, 3].try(:slice, 1) { to_s }).to eq 2
+    end
+
+    it "If try is called without arguments it yields the receiver to a given" do
+      inside_block = nil
+      "person".try do |p|
+        inside_block = p
+      end
+      expect(inside_block).to eq "person"
+    end
   end
 
   describe "Delegator.try" do
