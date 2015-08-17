@@ -23,11 +23,73 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+### Static Analysis
+
+```ruby
+ruby_class_as_str <<-RUBY
+  class A < B::C
+    def method1(arg)
+    end
+  end
+RUBY
+
+ruby_class = DissociatedIntrospection::RubyClass.new(source: ruby_class_as_str)
+ruby_class.class_name
+    # => "A" 
+    
+ruby_class.parent_class_name
+    # => "B::C"
+    
+new_ruby_class = ruby_class.modify_parent_class(:C)
+new_ruby_class.parent_class_name
+    # => "C"
+    
+new_ruby_class.to_ruby_str
+    # => "class A < C\n  def method\n  end\nend"
+    
+ruby_class.defs.first.name
+    # => :method1
+
+ruby_class.defs.first.arguments
+    # => "arg"
+```
+
+### Sandboxed Analysis
+
+```ruby
+# app/model/user.rb
+class User < ActiveRecord::Base
+  attr_accessor :baz
+  scope :recent_users, -> { 'some SQL' }
+  include UserHelpers
+  def display_name
+    "#{first_name} #{last_name}"
+  end
+end
+```
+
+ActiveRecord does not need to be loaded, it will be replaced with an alternate.
+
+```ruby
+inspection = DissociatedIntrospection::Inspection.new(file: user_model_file)
+
+inspection.class_macros
+    # => [{ attr_accessor: [[:baz]]},
+          { scope: [[:recent_users], #<Proc:0x0> ] },
+          { include: [[#<Module:0x0>]]}]
+          
+inspection.missing_constants
+    # => { UserHelpers: #<Module:0x0> }
+    
+# Removes meta-programmed methods from ActiveRecord
+inspection.get_class.instance_methods(false)
+    # => [ :method1 ]
+
+```
 
 ## Development
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `bin/console` for an interactive prompt that will allow you to experiment.
+Run `bin/console` for an interactive prompt that will allow you to experiment.
 
 To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release` to create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
 

@@ -1,13 +1,13 @@
 module DissociatedIntrospection
-
   class RubyClass
-
     using Tryable
 
-    attr_reader :source
-
-    def initialize(source)
+    def initialize(source: nil, ast: nil)
       @source = source
+      @ast    = ast
+      if source.nil? && ast.nil?
+        raise ArgumentError.new "#{self.class.name} require either source or ast to be given as named arguments."
+      end
     end
 
     def is_class?
@@ -31,7 +31,7 @@ module DissociatedIntrospection
       reset_nodes
       nodes[0] = Parser::CurrentRuby.parse(class_name)
       new_ast  = ast.updated(nil, nodes, nil)
-      Unparser.unparse(new_ast)
+      self.class.new(ast: new_ast)
     end
 
     def modify_parent_class(parent_class)
@@ -44,8 +44,50 @@ module DissociatedIntrospection
         nodes[1] = nodes[0].updated(:const, [nil, parent_class.to_sym])
         new_ast  = ast.updated(nil, nodes, nil)
       end
-      Unparser.unparse(new_ast)
+      self.class.new(ast: new_ast)
     end
+
+    class Def
+
+      def initialize(ast:)
+        @ast = ast
+      end
+
+      def name
+        ast.children[0]
+      end
+
+      def arguments
+        Unparser.unparse(ast.children[1])
+      end
+
+      def body
+        Unparser.unparse(ast.children[2])
+      end
+
+      def to_ruby_str
+        Unparser.unparse(ast)
+      end
+
+      private
+      attr_reader :ast
+    end
+
+    def defs
+      class_begin.children.select { |n| n.try(:type) == :def }.map{|n| Def.new(ast: n)}
+    end
+
+    def class_begin
+      find_class.children.find{|n| n.try(:type) == :begin}
+    end
+
+    def to_ruby_str
+      Unparser.unparse(ast)
+    end
+
+    private
+
+    attr_reader :source
 
     def find_class
       return ast if ast.try(:type) == :class
@@ -63,8 +105,6 @@ module DissociatedIntrospection
     def reset_nodes
       @nodes = nil
     end
-
   end
-
 end
 

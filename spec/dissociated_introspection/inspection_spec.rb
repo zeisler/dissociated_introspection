@@ -2,37 +2,85 @@ require 'spec_helper'
 require 'dissociated_introspection'
 
 RSpec.describe DissociatedIntrospection::Inspection do
-  describe "#call" do
-    let(:file) { instance_double(File, read: ruby_class, path: '') }
+  let(:file) { instance_double(File, read: ruby_class, path: '') }
 
-    context 'MyClass' do
-      let(:ruby_class) {
-        <<-RUBY
+  describe "#parsed_source" do
+    let(:ruby_class) {
+      <<-RUBY
+      class MyClass < OtherClass
+      end
+      RUBY
+    }
+
+    it "returns a RubyClass instance" do
+      expect(described_class.new(file: file).parsed_source.class).to eq(DissociatedIntrospection::RubyClass)
+    end
+  end
+
+  describe "#get_class" do
+    let(:ruby_class) {
+      <<-RUBY
+      class MyClass < OtherClass
+        def method1
+        end
+      end
+      RUBY
+    }
+
+    it "returns the sandboxed class" do
+      expect(described_class.new(file: file).get_class.name).to match(/MyClass/)
+    end
+
+    it "superclass is the altered parent class" do
+      expect(described_class.new(file: file).get_class.superclass).to eq(DissociatedIntrospection::RecordingParent)
+    end
+  end
+
+  describe "#class_macros" do
+    let(:ruby_class) {
+      <<-RUBY
       class MyClass < OtherClass
         attr_writer :foo, :bar
         attr_reader :foo
         attr_accessor :baz
+      end
+      RUBY
+    }
 
+    it 'records attr_* macros' do
+      expect(described_class.new(file: file).class_macros).to eq([{ :attr_writer => [[:foo, :bar]] },
+                                                                  { :attr_reader => [[:foo]] },
+                                                                  { :attr_accessor => [[:baz]] }])
+    end
+
+    context "listens to methods inclusion macros" do
+      let(:ruby_class) {
+        <<-RUBY
+      class MyClass < OtherClass
+        module MyModule
+        end
+        include MyModule
+        extend MyModule
+        prepend MyModule
       end
         RUBY
       }
 
-      it "#ruby_class_source#class_name" do
-        expect(described_class.new(file: file).parsed_source.class_name).to eq("MyClass")
+      it 'include' do
+        expect(described_class.new(file: file).class_macros[0][:include][0][0].name).to match(/MyClass::MyModule/)
+        expect(described_class.new(file: file).class_macros[0]).to match(/MyClass::MyModule/)
       end
 
-      it "get_class" do
-        expect(described_class.new(file: file).get_class.superclass).to eq(DissociatedIntrospection::RecordingParent)
+      it 'extend' do
+        expect(described_class.new(file: file).class_macros[1][:extend][0][0].name).to match(/MyClass::MyModule/)
       end
 
-      it 'intercepts class macros' do
-        expect(described_class.new(file: file).class_macros).to eq([{ :attr_writer => [[:foo, :bar]] },
-                                                                    { :attr_reader => [[:foo]] },
-                                                                    { :attr_accessor => [[:baz]] }])
+      it 'prepend' do
+        expect(described_class.new(file: file).class_macros[2][:prepend][0][0].name).to match(/MyClass::MyModule/)
       end
     end
 
-    describe "method that takes a block" do
+    context "method that takes a block" do
       let(:ruby_class) {
         <<-RUBY
       class MyClass < OtherClass
@@ -45,7 +93,6 @@ RSpec.describe DissociatedIntrospection::Inspection do
 
       it 'first arg' do
         expect(described_class.new(file: file).class_macros[0][:i_take_a_block][0]).to eq([:hello])
-
       end
 
       it 'block' do
@@ -56,24 +103,21 @@ RSpec.describe DissociatedIntrospection::Inspection do
         expect(described_class.new(file: file).class_macros[0][:i_take_a_block][1].call).to eq('hi')
       end
     end
+  end
 
-    context 'TheClass' do
+  describe "#missing_constants" do
+    context "When referenced constant is not defined" do
       let(:ruby_class) {
         <<-RUBY
-      class TheClass < OtherClass
-        class_macro :foo, :bar
-        another_method :bax
+      class MyClass < OtherClass
+        MyModule
       end
         RUBY
       }
 
-      it "#class_name" do
-        expect(described_class.new(file: file).parsed_source.class_name).to eq("TheClass")
-      end
-
-      it 'intercepts class macros' do
-        expect(described_class.new(file: file).class_macros).to eq([{ class_macro: [[:foo, :bar]] },
-                                                                    { another_method: [[:bax]] }])
+      it 'creates a blank module' do
+        expect(described_class.new(file: file).missing_constants[:MyModule].class)
+          .to eq(Module)
       end
     end
   end

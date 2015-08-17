@@ -10,6 +10,14 @@ module DissociatedIntrospection
         @__missing_class_macros__ ||= []
       end
 
+      def const_missing(const)
+        __missing_constants__[const] = self.const_set(const, Module.new)
+      end
+
+      def __missing_constants__
+        @__missing_constants__ ||= {}
+      end
+
       def listen_to_defined_macros(*methods)
         methods.each do |m|
           module_eval(<<-RUBY, __FILE__)

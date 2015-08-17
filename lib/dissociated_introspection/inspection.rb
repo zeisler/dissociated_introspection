@@ -1,7 +1,6 @@
 require 'ostruct'
 
 module DissociatedIntrospection
-
   class Inspection
 
     def initialize(file:, parent_class_replacement: :RecordingParent)
@@ -17,15 +16,19 @@ module DissociatedIntrospection
       get_class.__missing_class_macros__
     end
 
+    def missing_constants
+      get_class.__missing_constants__
+    end
+
     def parsed_source
-      @parsed_source ||= RubyClass.new(file.read)
+      @parsed_source ||= RubyClass.new(source: file.read)
     end
 
     private
 
     def _get_class
-      modified_class_str = parsed_source.modify_parent_class(parent_class_replacement)
-      load_sandbox(OpenStruct.new(read: modified_class_str, path: file.path))
+      modified_class_source = parsed_source.modify_parent_class(parent_class_replacement)
+      load_sandbox(OpenStruct.new(read: modified_class_source.to_ruby_str, path: file.path))
     end
 
     def load_sandbox(file)
@@ -33,6 +36,5 @@ module DissociatedIntrospection
     end
 
     attr_reader :parent_class_replacement, :file
-
   end
 end
