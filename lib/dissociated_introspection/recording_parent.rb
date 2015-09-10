@@ -11,7 +11,9 @@ module DissociatedIntrospection
       end
 
       def const_missing(const)
-        __missing_constants__[const] = self.const_set(const, Module.new)
+        m = Module.new
+        self.const_set(const, m)
+        __missing_constants__[const] = m
       end
 
       def __missing_constants__
@@ -33,3 +35,4 @@ module DissociatedIntrospection
     listen_to_defined_macros :attr_reader, :attr_writer, :attr_accessor, :prepend, :include, :extend
   end
 end
+

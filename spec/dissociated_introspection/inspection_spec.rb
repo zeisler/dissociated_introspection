@@ -115,8 +115,25 @@ RSpec.describe DissociatedIntrospection::Inspection do
       }
 
       it 'creates a blank module' do
-        expect(described_class.new(file: file).missing_constants[:MyModule].class)
+        result = described_class.new(file: file).missing_constants
+        expect(result[:MyModule].class)
           .to eq(Module)
+      end
+    end
+
+    context "When referenced nested constant is not defined" do
+      let(:ruby_class) {
+        <<-RUBY
+      class MyClass < OtherClass
+        MyModule::Nested
+      end
+        RUBY
+      }
+
+      it do
+        result = described_class.new(file: file).missing_constants
+        expect(result.size).to eq 2
+        expect(result[:Nested].class).to eq(Module)
       end
     end
   end
