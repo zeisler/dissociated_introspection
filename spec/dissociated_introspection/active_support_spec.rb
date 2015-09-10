@@ -1,5 +1,6 @@
 require "spec_helper"
 require "dissociated_introspection/active_support"
+require "Tempfile"
 
 describe ActiveSupport::Try do
   using ActiveSupport::Try
