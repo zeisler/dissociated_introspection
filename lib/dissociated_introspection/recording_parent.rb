@@ -29,6 +29,7 @@ module DissociatedIntrospection
       end
     end
 
+    # This is only for overrides to ruby class macros. All others will be recorded with method_missing.
     listen_to_defined_macros :attr_reader, :attr_writer, :attr_accessor, :prepend, :include, :extend
   end
 end
