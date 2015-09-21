@@ -5,3 +5,7 @@ if ENV['CODECLIMATE_REPO_TOKEN']
   CodeClimate::TestReporter.start
 end
 
+RSpec.configure do |c|
+  # c.disable_monkey_patching!
+  c.seed = rand(99999)
+end
