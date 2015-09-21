@@ -32,7 +32,7 @@ RSpec.describe DissociatedIntrospection::Inspection do
     end
 
     it "superclass is the altered parent class" do
-      expect(described_class.new(file: file).get_class.superclass).to eq(DissociatedIntrospection::RecordingParent)
+      expect(described_class.new(file: file).get_class.superclass.name).to match(/RecordingParent/)
     end
   end
 
@@ -47,7 +47,7 @@ RSpec.describe DissociatedIntrospection::Inspection do
       RUBY
     }
 
-    it 'records attr_* macros' do
+    it "records attr_* macros" do
       expect(described_class.new(file: file).class_macros).to eq([{ :attr_writer => [[:foo, :bar]] },
                                                                   { :attr_reader => [[:foo]] },
                                                                   { :attr_accessor => [[:baz]] }])
@@ -56,13 +56,13 @@ RSpec.describe DissociatedIntrospection::Inspection do
     context "listens to methods inclusion macros" do
       let(:ruby_class) {
         <<-RUBY
-      class MyClass < OtherClass
-        module MyModule
+        class MyClass < OtherClass
+          module MyModule
+          end
+          include MyModule
+          extend MyModule
+          prepend MyModule
         end
-        include MyModule
-        extend MyModule
-        prepend MyModule
-      end
         RUBY
       }
 
@@ -82,11 +82,11 @@ RSpec.describe DissociatedIntrospection::Inspection do
     context "method that takes a block" do
       let(:ruby_class) {
         <<-RUBY
-      class MyClass < OtherClass
-        i_take_a_block(:hello) do
-          'hi'
+        class MyClass < OtherClass
+          i_take_a_block(:hello) do
+            'hi'
+          end
         end
-      end
         RUBY
       }
 
@@ -108,32 +108,39 @@ RSpec.describe DissociatedIntrospection::Inspection do
     context "When referenced constant is not defined" do
       let(:ruby_class) {
         <<-RUBY
-      class MyClass < OtherClass
-        MyModule
-      end
+        class MyClass < OtherClass
+          SingleModule
+        end
         RUBY
       }
 
-      it 'creates a blank module' do
+      it "creates a blank module" do
         result = described_class.new(file: file).missing_constants
-        expect(result[:MyModule].class)
+        expect(result[:SingleModule].class)
           .to eq(Module)
       end
     end
 
-    context "When referenced nested constant is not defined" do
+    context "When referenced nested constants are not defined" do
       let(:ruby_class) {
         <<-RUBY
-      class MyClass < OtherClass
-        MyModule::Nested
-      end
+        class MyClass < OtherClass
+          ParentModule::NestedModule
+        end
         RUBY
       }
 
-      it do
+      it "is generated and recorded in a Hash" do
         result = described_class.new(file: file).missing_constants
         expect(result.size).to eq 2
-        expect(result[:Nested].class).to eq(Module)
+        expect(result[:NestedModule].class).to eq(Module)
+        expect(result[:ParentModule].class).to eq(Module)
+      end
+
+      it "generates the modules within their nesting" do
+        klass = described_class.new(file: file).get_class
+        expect(klass::ParentModule::NestedModule.name).to eq(:NestedModule)
+        expect(klass::ParentModule.constants).to eq([:NestedModule])
       end
     end
   end
