@@ -43,24 +43,31 @@ RSpec.describe DissociatedIntrospection::Inspection do
     let(:ruby_class) {
       <<-RUBY
         class MyClass < OtherClass
+          include MyModule
           include MyModule1
           extend MyModule2
+          module MyModule3
+          end
           extend MyModule3
-          prepend MyModule4
+          prepend MyModule4::NestedModule
         end
       RUBY
     }
 
     it 'extended_modules' do
-      expect(described_class.new(file: file).extended_modules.map(&:name)).to eq(["MyClass::MyModule2", "MyClass::MyModule3"])
+      expect(described_class.new(file: file).extended_modules.map(&:name_wo_parent)).to eq(["MyModule2", "MyModule3"])
     end
 
     it 'included_modules' do
-      expect(described_class.new(file: file).included_modules.map(&:name)).to eq(["MyClass::MyModule1"])
+      expect(described_class.new(file: file).included_modules.map(&:inspect)).to eq(["MyClass::MyModule", "MyClass::MyModule1"])
+      expect(described_class.new(file: file).included_modules.map(&:name)).to eq(["MyClass::MyModule", "MyClass::MyModule1"])
+      expect(described_class.new(file: file).included_modules.map(&:name_wo_parent)).to eq(["MyModule", "MyModule1"])
     end
 
     it 'prepend_modules' do
-      expect(described_class.new(file: file).prepend_modules.map(&:name)).to eq(["MyClass::MyModule4"])
+      expect(described_class.new(file: file).prepend_modules.map(&:inspect)).to eq(["MyClass::MyModule4::NestedModule"])
+      expect(described_class.new(file: file).prepend_modules.map(&:name)).to eq(["MyClass::MyModule4::NestedModule"])
+      expect(described_class.new(file: file).prepend_modules.map(&:name_wo_parent)).to eq(["MyModule4::NestedModule"])
     end
   end
 
