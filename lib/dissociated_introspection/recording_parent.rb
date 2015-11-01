@@ -16,7 +16,7 @@ class RecordingParent < BasicObject
         const.extend ConstMissing
         const.module_eval(<<-RUBY, __FILE__)
           def self.name
-            :#{const_sym}
+            "#{name.gsub(/#<Module:.*>::/, '')}::#{const_sym}"
           end
         RUBY
         RecordingParent.__missing_constants__[const_sym] = const

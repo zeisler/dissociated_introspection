@@ -12,8 +12,21 @@ module DissociatedIntrospection
       @get_class ||= _get_class
     end
 
-    def class_macros
-      get_class.__missing_class_macros__
+    def class_macros(type=nil)
+      return get_class.__missing_class_macros__ if type.nil?
+
+    end
+
+    def extended_modules
+      find_class_macro_by_type(:extend){|a| a.first }
+    end
+
+    def included_modules
+      find_class_macro_by_type(:include) {|a| a.first }
+    end
+
+    def prepend_modules
+      find_class_macro_by_type(:prepend) {|a| a.first }
     end
 
     def missing_constants
@@ -25,6 +38,10 @@ module DissociatedIntrospection
     end
 
     private
+
+    def find_class_macro_by_type(type)
+      get_class.__missing_class_macros__.select{|h| h.keys.first == type}.map {|h| yield(h.values.first.first) }
+    end
 
     def _get_class
       modified_class_source = parsed_source.modify_parent_class(parent_class_replacement)

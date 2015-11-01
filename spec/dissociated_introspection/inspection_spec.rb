@@ -23,6 +23,9 @@ RSpec.describe DissociatedIntrospection::Inspection do
       class MyClass < OtherClass
         def method1
         end
+
+        include X
+        extend Y
       end
       RUBY
     }
@@ -33,6 +36,31 @@ RSpec.describe DissociatedIntrospection::Inspection do
 
     it "superclass is the altered parent class" do
       expect(described_class.new(file: file).get_class.superclass.name).to match(/RecordingParent/)
+    end
+  end
+
+  describe "XXed_modules" do
+    let(:ruby_class) {
+      <<-RUBY
+        class MyClass < OtherClass
+          include MyModule1
+          extend MyModule2
+          extend MyModule3
+          prepend MyModule4
+        end
+      RUBY
+    }
+
+    it 'extended_modules' do
+      expect(described_class.new(file: file).extended_modules.map(&:name)).to eq(["MyClass::MyModule2", "MyClass::MyModule3"])
+    end
+
+    it 'included_modules' do
+      expect(described_class.new(file: file).included_modules.map(&:name)).to eq(["MyClass::MyModule1"])
+    end
+
+    it 'prepend_modules' do
+      expect(described_class.new(file: file).prepend_modules.map(&:name)).to eq(["MyClass::MyModule4"])
     end
   end
 
@@ -117,7 +145,7 @@ RSpec.describe DissociatedIntrospection::Inspection do
       it "creates a blank module" do
         result = described_class.new(file: file).missing_constants
         expect(result[:SingleModule].class)
-          .to eq(Module)
+            .to eq(Module)
       end
     end
 
@@ -130,6 +158,11 @@ RSpec.describe DissociatedIntrospection::Inspection do
         RUBY
       }
 
+      it "create a name with the proper namespace" do
+        result = described_class.new(file: file).missing_constants.values
+        expect(result.map(&:name)).to eq(["MyClass::ParentModule", "MyClass::ParentModule::NestedModule"])
+      end
+
       it "is generated and recorded in a Hash" do
         result = described_class.new(file: file).missing_constants
         expect(result.size).to eq 2
@@ -139,7 +172,7 @@ RSpec.describe DissociatedIntrospection::Inspection do
 
       it "generates the modules within their nesting" do
         klass = described_class.new(file: file).get_class
-        expect(klass::ParentModule::NestedModule.name).to eq(:NestedModule)
+        expect(klass::ParentModule::NestedModule.name).to eq("MyClass::ParentModule::NestedModule")
         expect(klass::ParentModule.constants).to eq([:NestedModule])
       end
     end
