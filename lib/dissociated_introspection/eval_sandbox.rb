@@ -1,9 +1,10 @@
 module DissociatedIntrospection
   class EvalSandbox
 
-    def initialize(file:, recording_parent: recording_parent_default)
+    def initialize(file:, recording_parent: recording_parent_default, module_namespace: Module.new)
       @file             = file
       @recording_parent = recording_parent
+      @module_namespace = module_namespace
     end
 
 
@@ -19,11 +20,7 @@ module DissociatedIntrospection
 
     private
 
-    attr_reader :file, :recording_parent
-
-    def module_namespace
-      @module ||= Module.new
-    end
+    attr_reader :file, :recording_parent, :module_namespace
 
     def recording_parent_default
       File.new(File.join(File.dirname(__FILE__), "recording_parent.rb"))

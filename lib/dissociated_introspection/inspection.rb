@@ -36,10 +36,14 @@ module DissociatedIntrospection
       @parsed_source ||= RubyClass.new(source: file.read)
     end
 
+    def sandbox_module
+      @sandbox_module ||= Module.new
+    end
+
     private
 
     def add_method_name_wo_parent(_module)
-      def _module.name_wo_parent
+      def _module.referenced_name
         n = name.split("::")
         return n[2..-1].join("::") if n.first =~ /#<Module:.*>/
         return n[1..-1].join("::")
@@ -57,7 +61,7 @@ module DissociatedIntrospection
     end
 
     def load_sandbox(file)
-      @klass ||= EvalSandbox.new(file: file).call
+      @klass ||= EvalSandbox.new(file: file, module_namespace: sandbox_module).call
     end
 
     attr_reader :parent_class_replacement, :file

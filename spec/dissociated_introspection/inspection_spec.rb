@@ -54,20 +54,24 @@ RSpec.describe DissociatedIntrospection::Inspection do
       RUBY
     }
 
+    subject { described_class.new(file: file) }
+
     it 'extended_modules' do
-      expect(described_class.new(file: file).extended_modules.map(&:name_wo_parent)).to eq(["MyModule2", "MyModule3"])
+      expect(subject.extended_modules.map(&:inspect)).to eq(["MyClass::MyModule2", "#{subject.sandbox_module}::MyClass::MyModule3"])
+      expect(subject.extended_modules.map(&:name)).to eq(["MyClass::MyModule2", "#{subject.sandbox_module}::MyClass::MyModule3"])
+      expect(subject.extended_modules.map(&:referenced_name)).to eq(["MyModule2", "MyModule3"])
     end
 
     it 'included_modules' do
-      expect(described_class.new(file: file).included_modules.map(&:inspect)).to eq(["MyClass::MyModule", "MyClass::MyModule1"])
-      expect(described_class.new(file: file).included_modules.map(&:name)).to eq(["MyClass::MyModule", "MyClass::MyModule1"])
-      expect(described_class.new(file: file).included_modules.map(&:name_wo_parent)).to eq(["MyModule", "MyModule1"])
+      expect(subject.included_modules.map(&:inspect)).to eq(["MyClass::MyModule", "MyClass::MyModule1"])
+      expect(subject.included_modules.map(&:name)).to eq(["MyClass::MyModule", "MyClass::MyModule1"])
+      expect(subject.included_modules.map(&:referenced_name)).to eq(["MyModule", "MyModule1"])
     end
 
     it 'prepend_modules' do
-      expect(described_class.new(file: file).prepend_modules.map(&:inspect)).to eq(["MyClass::MyModule4::NestedModule"])
-      expect(described_class.new(file: file).prepend_modules.map(&:name)).to eq(["MyClass::MyModule4::NestedModule"])
-      expect(described_class.new(file: file).prepend_modules.map(&:name_wo_parent)).to eq(["MyModule4::NestedModule"])
+      expect(subject.prepend_modules.map(&:inspect)).to eq(["MyClass::MyModule4::NestedModule"])
+      expect(subject.prepend_modules.map(&:name)).to eq(["MyClass::MyModule4::NestedModule"])
+      expect(subject.prepend_modules.map(&:referenced_name)).to eq(["MyModule4::NestedModule"])
     end
   end
 
