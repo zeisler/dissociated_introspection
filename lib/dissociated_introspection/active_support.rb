@@ -32,7 +32,7 @@ module ActiveSupport
     end
   end
 
-  class Object
+  # class Object
     ##
     # :method: try
     #
@@ -110,7 +110,7 @@ module ActiveSupport
     #   "a".try!(:upcase) # => "A"
     #   nil.try!(:upcase) # => nil
     #   123.try!(:upcase) # => NoMethodError: undefined method `upcase' for 123:Fixnum
-  end
+  # end
 
   class Delegator
     ##
