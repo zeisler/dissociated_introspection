@@ -13,6 +13,7 @@ module DissociatedIntrospection
     end
 
     def class_macros(type=nil)
+      # FIXME
       return get_class.__missing_class_macros__ if type.nil?
     end
 
@@ -57,7 +58,12 @@ module DissociatedIntrospection
 
     def _get_class
       modified_class_source = parsed_source.modify_parent_class(parent_class_replacement)
-      load_sandbox(OpenStruct.new(read: modified_class_source.to_ruby_str, path: file.path))
+      path = if file.is_a? Pathname
+        file.to_s
+      else
+        file.path
+      end
+      load_sandbox(OpenStruct.new(read: modified_class_source.to_ruby_str, path: path))
     end
 
     def load_sandbox(file)
