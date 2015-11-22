@@ -12,7 +12,7 @@ class RecordingParent < BasicObject
 
     module ConstMissing
       def const_missing(const_sym)
-        const = self.const_set(const_sym, Module.new)
+        const = self.const_set(const_sym, Class.new)
         const.extend ConstMissing
         const.module_eval(<<-RUBY, __FILE__,  __LINE__+1)
           def self.name

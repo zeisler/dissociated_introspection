@@ -156,7 +156,22 @@ RSpec.describe DissociatedIntrospection::Inspection do
       it "creates a blank module" do
         result = described_class.new(file: file).missing_constants
         expect(result[:SingleModule].class)
-            .to eq(Module)
+            .to eq(Class)
+      end
+    end
+
+    context "when missing constant is a parent class" do
+      let(:ruby_class) {
+        <<-RUBY
+      class MyClass < OtherClass
+        class IncompleteData < StandardError; end
+      end
+        RUBY
+      }
+
+      it do
+        subject = described_class.new(file: file)
+        expect(subject.missing_constants.values.map(&:name)).to eq(["MyClass::StandardError"])
       end
     end
 
@@ -177,8 +192,8 @@ RSpec.describe DissociatedIntrospection::Inspection do
       it "is generated and recorded in a Hash" do
         result = described_class.new(file: file).missing_constants
         expect(result.size).to eq 2
-        expect(result[:NestedModule].class).to eq(Module)
-        expect(result[:ParentModule].class).to eq(Module)
+        expect(result[:NestedModule].class).to eq(Class)
+        expect(result[:ParentModule].class).to eq(Class)
       end
 
       it "generates the modules within their nesting" do
