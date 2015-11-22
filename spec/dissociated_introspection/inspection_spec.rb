@@ -75,6 +75,34 @@ RSpec.describe DissociatedIntrospection::Inspection do
     end
   end
 
+  describe "#locally_defined_modules" do
+    let(:ruby_class) {
+      <<-RUBY
+      class MyClass < OtherClass
+        MY_CONST = 1
+        module MyModule1
+        end
+
+        module MyModule2
+        end
+        include MyModule1
+        include MyModule2
+        include MyModule3
+        extend MyModule4
+        prepend MyModule5
+      end
+      RUBY
+    }
+
+    it "returns an array of constant names" do
+      expect(described_class.new(file: file).locally_defined_constants).to eq([:MY_CONST,:MyModule1, :MyModule2])
+    end
+
+    it "returns an array of constants by type" do
+      expect(described_class.new(file: file).locally_defined_constants(Module)).to eq([:MyModule1, :MyModule2])
+    end
+  end
+
   describe "#class_macros" do
     let(:ruby_class) {
       <<-RUBY
@@ -156,22 +184,23 @@ RSpec.describe DissociatedIntrospection::Inspection do
       it "creates a blank module" do
         result = described_class.new(file: file).missing_constants
         expect(result[:SingleModule].class)
-            .to eq(Class)
+            .to eq(Module)
       end
     end
 
-    context "when missing constant is a parent class" do
+    context "Global Constants will not raise an error when uses as parent class" do
       let(:ruby_class) {
         <<-RUBY
-      class MyClass < OtherClass
-        class IncompleteData < StandardError; end
-      end
+        class MyClass < OtherClass
+          class IncompleteData < StandardError; end
+          class OtherError < SimpleDelegator; end
+        end
         RUBY
       }
 
       it do
         subject = described_class.new(file: file)
-        expect(subject.missing_constants.values.map(&:name)).to eq(["MyClass::StandardError"])
+        expect(subject.missing_constants.values.map(&:name)).to eq([])
       end
     end
 
@@ -192,8 +221,8 @@ RSpec.describe DissociatedIntrospection::Inspection do
       it "is generated and recorded in a Hash" do
         result = described_class.new(file: file).missing_constants
         expect(result.size).to eq 2
-        expect(result[:NestedModule].class).to eq(Class)
-        expect(result[:ParentModule].class).to eq(Class)
+        expect(result[:NestedModule].class).to eq(Module)
+        expect(result[:ParentModule].class).to eq(Module)
       end
 
       it "generates the modules within their nesting" do

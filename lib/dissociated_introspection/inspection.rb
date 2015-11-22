@@ -33,6 +33,12 @@ module DissociatedIntrospection
       get_class.__missing_constants__
     end
 
+    def locally_defined_constants(type=nil)
+      consts = get_class.constants - get_class.__missing_constants__.keys - [:BasicObject]
+      return consts unless type
+      consts.select{ |c| get_class.const_get(c).is_a?(type)}
+    end
+
     def parsed_source
       @parsed_source ||= RubyClass.new(source: file.read)
     end

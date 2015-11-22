@@ -85,6 +85,10 @@ module DissociatedIntrospection
       Unparser.unparse(ast)
     end
 
+    def scrub_inner_classes
+      self.class.new(ast: find_class.updated(find_class.type, class_begin.updated(class_begin.type, class_begin.children.reject { |n| n.try(:type) == :class })))
+    end
+
     private
 
     attr_reader :source

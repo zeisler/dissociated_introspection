@@ -186,7 +186,6 @@ describe DissociatedIntrospection::RubyClass do
       expect(subject.is_class?).to eq true
     end
 
-
     it "is not a class" do
       subject = described_class.new source: <<-RUBY
         def method(options={})
@@ -241,6 +240,28 @@ describe DissociatedIntrospection::RubyClass do
         expect(subject.defs.first.to_ruby_str).to eq "def method1(arg, named_arg:)\n  1 + 1\nend"
         expect(subject.defs.last.to_ruby_str).to eq "def method2(arg = nil)\n  puts(\"hello\")\nend"
       end
+    end
+  end
+
+  describe "#scrub_inner_classes" do
+    let(:ruby_class){
+      <<-RUBY
+      require "bla"
+      class A
+        include MyModule
+        class MyError < StandardError;end
+        def keep_me
+        end
+        def self.hello
+        end
+      end
+      RUBY
+    }
+
+    subject { described_class.new(source: ruby_class) }
+
+    it "will return a ruby string without the inner class" do
+      expect(subject.scrub_inner_classes.to_ruby_str).to eq("class include(MyModule) < def keep_me\nend\n  def self.hello\n  end\nend")
     end
   end
 end
