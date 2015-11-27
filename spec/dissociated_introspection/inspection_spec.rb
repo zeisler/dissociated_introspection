@@ -4,6 +4,8 @@ require 'dissociated_introspection'
 RSpec.describe DissociatedIntrospection::Inspection do
   let(:file) { instance_double(File, read: ruby_class, path: '') }
 
+  subject { described_class.new(file: file) }
+
   describe "#parsed_source" do
     let(:ruby_class) {
       <<-RUBY
@@ -13,7 +15,7 @@ RSpec.describe DissociatedIntrospection::Inspection do
     }
 
     it "returns a RubyClass instance" do
-      expect(described_class.new(file: file).parsed_source.class).to eq(DissociatedIntrospection::RubyClass)
+      expect(subject.parsed_source.class).to eq(DissociatedIntrospection::RubyClass)
     end
   end
 
@@ -31,11 +33,11 @@ RSpec.describe DissociatedIntrospection::Inspection do
     }
 
     it "returns the sandboxed class" do
-      expect(described_class.new(file: file).get_class.name).to match(/MyClass/)
+      expect(subject.get_class.name).to match(/MyClass/)
     end
 
     it "superclass is the altered parent class" do
-      expect(described_class.new(file: file).get_class.superclass.name).to match(/RecordingParent/)
+      expect(subject.get_class.superclass.name).to match(/RecordingParent/)
     end
   end
 
@@ -64,28 +66,67 @@ RSpec.describe DissociatedIntrospection::Inspection do
       RUBY
     }
 
-    subject { described_class.new(file: file) }
+    describe "#extended_modules" do
+      it "#inspect" do
+        expect(subject.extended_modules.map(&:inspect))
+          .to eq(%W(MyClass::MyModule2 #{subject.sandbox_module}::MyClass::MyModule3))
+      end
 
-    it 'extended_modules' do
-      expect(subject.extended_modules.map(&:inspect)).to eq(["MyClass::MyModule2", "#{subject.sandbox_module}::MyClass::MyModule3"])
-      expect(subject.extended_modules.map(&:name)).to eq(["MyClass::MyModule2", "#{subject.sandbox_module}::MyClass::MyModule3"])
-      expect(subject.extended_modules.map(&:referenced_name)).to eq(["MyModule2", "MyModule3"])
+      it "#name" do
+        expect(subject.extended_modules.map(&:name))
+          .to eq(%W(MyClass::MyModule2 #{subject.sandbox_module}::MyClass::MyModule3))
+      end
+
+      it "#referenced_name" do
+        expect(subject.extended_modules.map(&:referenced_name))
+          .to eq(%w(MyModule2 MyModule3))
+      end
     end
 
-    it 'included_modules' do
-      expect(subject.included_modules.map(&:inspect)).to eq(["MyClass::MyModule", "MyClass::MyModule1", "ExternallyDefined::ModuleNested"])
-      expect(subject.included_modules.map(&:name)).to eq(["MyClass::MyModule", "MyClass::MyModule1", "ExternallyDefined::ModuleNested"])
-      expect(subject.included_modules.map(&:referenced_name)).to eq(["MyModule", "MyModule1", "ExternallyDefined::ModuleNested"])
+    describe "#included_modules" do
+      it "#inspect" do
+        expect(subject.included_modules.map(&:inspect))
+          .to eq(%w(MyClass::MyModule MyClass::MyModule1 ExternallyDefined::ModuleNested))
+      end
+
+      it "#name" do
+        expect(subject.included_modules.map(&:name))
+          .to eq(%w(MyClass::MyModule MyClass::MyModule1 ExternallyDefined::ModuleNested))
+      end
+
+      it "#referenced_name" do
+        expect(subject.included_modules.map(&:referenced_name))
+          .to eq(%w(MyModule MyModule1 ExternallyDefined::ModuleNested))
+      end
     end
 
-    it 'prepend_modules' do
-      expect(subject.prepend_modules.map(&:inspect)).to eq(["MyClass::MyModule4::NestedModule", "ExternallyDefined"])
-      expect(subject.prepend_modules.map(&:name)).to eq(["MyClass::MyModule4::NestedModule", "ExternallyDefined"])
-      expect(subject.prepend_modules.map(&:referenced_name)).to eq(["MyModule4::NestedModule", "ExternallyDefined"])
+    describe "#prepend_modules" do
+      it "#inspect" do
+        expect(subject.prepend_modules.map(&:inspect))
+          .to eq(%w(MyClass::MyModule4::NestedModule ExternallyDefined))
+      end
+
+      it "#name" do
+        expect(subject.prepend_modules.map(&:name))
+          .to eq(%w(MyClass::MyModule4::NestedModule ExternallyDefined))
+      end
+
+      it "#referenced_name" do
+        expect(subject.prepend_modules.map(&:referenced_name))
+          .to eq(%w(MyModule4::NestedModule ExternallyDefined))
+      end
     end
   end
 
   describe "#locally_defined_modules" do
+
+    before do
+      module ExternallyDefined
+        module ModuleNested
+        end
+      end
+    end
+
     let(:ruby_class) {
       <<-RUBY
       class MyClass < OtherClass
@@ -95,6 +136,7 @@ RSpec.describe DissociatedIntrospection::Inspection do
 
         module MyModule2
         end
+        include ExternallyDefined::ModuleNested
         include MyModule1
         include MyModule2
         include MyModule3
@@ -105,11 +147,16 @@ RSpec.describe DissociatedIntrospection::Inspection do
     }
 
     it "returns an array of constant names" do
-      expect(described_class.new(file: file).locally_defined_constants).to eq([:MY_CONST,:MyModule1, :MyModule2])
+      expect(subject.locally_defined_constants)
+        .to eq({ MY_CONST:  1,
+                 MyModule1: subject.sandbox_module::MyClass::MyModule1,
+                 MyModule2: subject.sandbox_module::MyClass::MyModule2 })
     end
 
     it "returns an array of constants by type" do
-      expect(described_class.new(file: file).locally_defined_constants(Module)).to eq([:MyModule1, :MyModule2])
+      expect(subject.locally_defined_constants(Module))
+        .to eq({ MyModule1: subject.sandbox_module::MyClass::MyModule1,
+                 MyModule2: subject.sandbox_module::MyClass::MyModule2 })
     end
   end
 
@@ -125,9 +172,9 @@ RSpec.describe DissociatedIntrospection::Inspection do
     }
 
     it "records attr_* macros" do
-      expect(described_class.new(file: file).class_macros).to eq([{ :attr_writer => [[:foo, :bar]] },
-                                                                  { :attr_reader => [[:foo]] },
-                                                                  { :attr_accessor => [[:baz]] }])
+      expect(subject.class_macros).to eq([{ :attr_writer => [[:foo, :bar]] },
+                                          { :attr_reader => [[:foo]] },
+                                          { :attr_accessor => [[:baz]] }])
     end
 
     context "listens to methods inclusion macros" do
@@ -144,15 +191,15 @@ RSpec.describe DissociatedIntrospection::Inspection do
       }
 
       it 'include' do
-        expect(described_class.new(file: file).class_macros[0][:include][0][0].name).to match(/MyClass::MyModule/)
+        expect(subject.class_macros[0][:include][0][0].name).to match(/MyClass::MyModule/)
       end
 
       it 'extend' do
-        expect(described_class.new(file: file).class_macros[1][:extend][0][0].name).to match(/MyClass::MyModule/)
+        expect(subject.class_macros[1][:extend][0][0].name).to match(/MyClass::MyModule/)
       end
 
       it 'prepend' do
-        expect(described_class.new(file: file).class_macros[2][:prepend][0][0].name).to match(/MyClass::MyModule/)
+        expect(subject.class_macros[2][:prepend][0][0].name).to match(/MyClass::MyModule/)
       end
     end
 
@@ -168,15 +215,15 @@ RSpec.describe DissociatedIntrospection::Inspection do
       }
 
       it 'first arg' do
-        expect(described_class.new(file: file).class_macros[0][:i_take_a_block][0]).to eq([:hello])
+        expect(subject.class_macros[0][:i_take_a_block][0]).to eq([:hello])
       end
 
       it 'block' do
-        expect(described_class.new(file: file).class_macros[0][:i_take_a_block][1].class).to eq(Proc)
+        expect(subject.class_macros[0][:i_take_a_block][1].class).to eq(Proc)
       end
 
       it 'proc will execute' do
-        expect(described_class.new(file: file).class_macros[0][:i_take_a_block][1].call).to eq('hi')
+        expect(subject.class_macros[0][:i_take_a_block][1].call).to eq('hi')
       end
     end
   end
@@ -192,9 +239,9 @@ RSpec.describe DissociatedIntrospection::Inspection do
       }
 
       it "creates a blank module" do
-        result = described_class.new(file: file).missing_constants
+        result = subject.missing_constants
         expect(result[:SingleModule].class)
-            .to eq(Module)
+          .to eq(Module)
       end
     end
 
@@ -209,7 +256,6 @@ RSpec.describe DissociatedIntrospection::Inspection do
       }
 
       it do
-        subject = described_class.new(file: file)
         expect(subject.missing_constants.values.map(&:name)).to eq([])
       end
     end
@@ -224,21 +270,19 @@ RSpec.describe DissociatedIntrospection::Inspection do
       }
 
       it "create a name with the proper namespace" do
-        result = described_class.new(file: file).missing_constants.values
-        expect(result.map(&:name)).to eq(["MyClass::ParentModule", "MyClass::ParentModule::NestedModule"])
+        expect(subject.missing_constants.values.map(&:name))
+          .to eq(["MyClass::ParentModule", "MyClass::ParentModule::NestedModule"])
       end
 
       it "is generated and recorded in a Hash" do
-        result = described_class.new(file: file).missing_constants
-        expect(result.size).to eq 2
-        expect(result[:NestedModule].class).to eq(Module)
-        expect(result[:ParentModule].class).to eq(Module)
+        expect(subject.missing_constants.size).to eq 2
+        expect(subject.missing_constants[:NestedModule].class).to eq(Module)
+        expect(subject.missing_constants[:ParentModule].class).to eq(Module)
       end
 
       it "generates the modules within their nesting" do
-        klass = described_class.new(file: file).get_class
-        expect(klass::ParentModule::NestedModule.name).to eq("MyClass::ParentModule::NestedModule")
-        expect(klass::ParentModule.constants).to eq([:NestedModule])
+        expect(subject.get_class::ParentModule::NestedModule.name).to eq("MyClass::ParentModule::NestedModule")
+        expect(subject.get_class::ParentModule.constants).to eq([:NestedModule])
       end
     end
   end
