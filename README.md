@@ -86,6 +86,11 @@ inspection.get_class.instance_methods(false)
     # => [ :method1 ]
 
 ```
+## Other methods
+* `DissociatedIntrospection::Inspection#extended_modules`
+* `DissociatedIntrospection::Inspection#included_modules`
+* `DissociatedIntrospection::Inspection#prepend_modules`
+* `DissociatedIntrospection::Inspection#locally_defined_constants`
 
 ## Development
 
