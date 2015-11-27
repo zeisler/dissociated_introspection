@@ -45,7 +45,7 @@ module DissociatedIntrospection
     def locally_defined_constants(type=nil)
       consts = get_class.constants - get_class.__missing_constants__.keys - [:BasicObject]
       return consts unless type
-      consts.select{ |c| get_class.const_get(c).is_a?(type)}
+      consts.select { |c| get_class.const_get(c).is_a?(type) }
     end
 
     # @return [DissociatedIntrospection::RubyClass]
@@ -61,10 +61,13 @@ module DissociatedIntrospection
     private
 
     def add_method_name_wo_parent(_module)
-      def _module.referenced_name
+      _class_name_ = parsed_source.class_name
+
+      _module.define_singleton_method(:referenced_name) do
         n = name.split("::")
-        return n[2..-1].join("::") if n.first =~ /#<Module:.*>/
-        return n[1..-1].join("::")
+        n = n.drop(1) if n.first =~ /#<Module:.*>/
+        n = n.drop(1) if n.first == _class_name_
+        return n.join("::")
       end
       _module
     end
@@ -75,11 +78,11 @@ module DissociatedIntrospection
 
     def _get_class
       modified_class_source = parsed_source.modify_parent_class(parent_class_replacement)
-      path = if file.is_a? Pathname
-        file.to_s
-      else
-        file.path
-      end
+      path                  = if file.is_a? Pathname
+                                file.to_s
+                              else
+                                file.path
+                              end
       load_sandbox(OpenStruct.new(read: modified_class_source.to_ruby_str, path: path))
     end
 

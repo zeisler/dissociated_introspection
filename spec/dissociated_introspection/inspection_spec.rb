@@ -40,16 +40,26 @@ RSpec.describe DissociatedIntrospection::Inspection do
   end
 
   describe "XXed_modules" do
+
+    before do
+      module ExternallyDefined
+        module ModuleNested
+        end
+      end
+    end
+
     let(:ruby_class) {
       <<-RUBY
         class MyClass < OtherClass
           include MyModule
           include MyModule1
+          include ExternallyDefined::ModuleNested
           extend MyModule2
           module MyModule3
           end
           extend MyModule3
           prepend MyModule4::NestedModule
+          prepend ExternallyDefined
         end
       RUBY
     }
@@ -63,15 +73,15 @@ RSpec.describe DissociatedIntrospection::Inspection do
     end
 
     it 'included_modules' do
-      expect(subject.included_modules.map(&:inspect)).to eq(["MyClass::MyModule", "MyClass::MyModule1"])
-      expect(subject.included_modules.map(&:name)).to eq(["MyClass::MyModule", "MyClass::MyModule1"])
-      expect(subject.included_modules.map(&:referenced_name)).to eq(["MyModule", "MyModule1"])
+      expect(subject.included_modules.map(&:inspect)).to eq(["MyClass::MyModule", "MyClass::MyModule1", "ExternallyDefined::ModuleNested"])
+      expect(subject.included_modules.map(&:name)).to eq(["MyClass::MyModule", "MyClass::MyModule1", "ExternallyDefined::ModuleNested"])
+      expect(subject.included_modules.map(&:referenced_name)).to eq(["MyModule", "MyModule1", "ExternallyDefined::ModuleNested"])
     end
 
     it 'prepend_modules' do
-      expect(subject.prepend_modules.map(&:inspect)).to eq(["MyClass::MyModule4::NestedModule"])
-      expect(subject.prepend_modules.map(&:name)).to eq(["MyClass::MyModule4::NestedModule"])
-      expect(subject.prepend_modules.map(&:referenced_name)).to eq(["MyModule4::NestedModule"])
+      expect(subject.prepend_modules.map(&:inspect)).to eq(["MyClass::MyModule4::NestedModule", "ExternallyDefined"])
+      expect(subject.prepend_modules.map(&:name)).to eq(["MyClass::MyModule4::NestedModule", "ExternallyDefined"])
+      expect(subject.prepend_modules.map(&:referenced_name)).to eq(["MyModule4::NestedModule", "ExternallyDefined"])
     end
   end
 
