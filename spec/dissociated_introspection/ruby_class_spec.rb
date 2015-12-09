@@ -1,7 +1,7 @@
 require "spec_helper"
 require "parser/current"
 require "unparser"
-require "dissociated_introspection/active_support"
+require "dissociated_introspection/try"
 require "dissociated_introspection/ruby_class"
 
 describe DissociatedIntrospection::RubyClass do

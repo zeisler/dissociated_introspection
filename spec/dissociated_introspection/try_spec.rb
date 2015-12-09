@@ -1,9 +1,9 @@
 require "spec_helper"
-require "dissociated_introspection/active_support"
+require "dissociated_introspection/try"
 require "tempfile"
 
-describe ActiveSupport::Try do
-  using ActiveSupport::Try
+describe DissociatedIntrospection::Try do
+  using DissociatedIntrospection::Try
 
   describe "Object.try" do
 

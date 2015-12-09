@@ -1,6 +1,6 @@
 module DissociatedIntrospection
   class RubyClass
-    using ActiveSupport::Try
+    using Try
 
     def initialize(source: nil, ast: nil)
       @source = source
