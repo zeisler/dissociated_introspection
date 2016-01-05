@@ -264,4 +264,36 @@ describe DissociatedIntrospection::RubyClass do
       expect(subject.scrub_inner_classes.to_ruby_str).to eq("class include(MyModule) < def keep_me\nend\n  def self.hello\n  end\nend")
     end
   end
+
+  describe "#wrap_in_modules" do
+
+    let(:ruby_class){
+      <<-RUBY
+      class A
+      end
+      RUBY
+    }
+
+    subject { described_class.new(source: ruby_class) }
+
+    it "no module string" do
+      expect(subject.wrap_in_modules("").to_ruby_str).to eq("class A\nend")
+    end
+
+    it "no module nil" do
+      expect(subject.wrap_in_modules(nil).to_ruby_str).to eq("class A\nend")
+    end
+
+    it "single module" do
+        expect(subject.wrap_in_modules("B").to_ruby_str).to eq("module B\n  class A\n  end\nend")
+    end
+
+    it "two modules deep" do
+      expect(subject.wrap_in_modules("X::Y").to_ruby_str).to eq("module X\n  module Y\n    class A\n    end\n  end\nend")
+    end
+
+    it "three modules deep" do
+      expect(subject.wrap_in_modules("X::Y::Z").to_ruby_str).to eq("module X\n  module Y\n    module Z\n      class A\n      end\n    end\n  end\nend")
+    end
+  end
 end

@@ -89,7 +89,25 @@ module DissociatedIntrospection
       self.class.new(ast: find_class.updated(find_class.type, class_begin.updated(class_begin.type, class_begin.children.reject { |n| n.try(:type) == :class })))
     end
 
+    def wrap_in_modules(modules)
+      return self if modules.nil? || modules.empty?
+      ruby_string = to_ruby_str
+      modules.split("::").reverse.each do |module_name|
+        ruby_string = wrap_module(module_name, ruby_string)
+      end
+      wrapped_ast = Parser::CurrentRuby.parse(ruby_string)
+      self.class.new(ast: wrapped_ast)
+    end
+
     private
+
+    def wrap_module(module_name, ruby)
+      <<-RUBY
+        module #{module_name}
+      #{ruby}
+        end
+      RUBY
+    end
 
     attr_reader :source
 
