@@ -1,13 +1,29 @@
 module DissociatedIntrospection
   class RubyClass
+    attr_reader :ruby_code
     using Try
 
-    def initialize(source: nil, ast: nil)
-      @source = source
-      @ast    = ast
-      if source.nil? && ast.nil?
-        raise ArgumentError.new "#{self.class.name} require either source or ast to be given as named arguments."
-      end
+    def initialize(ruby_code)
+      @ruby_code = if ruby_code.is_a?(Hash) && ruby_code.has_key?(:source)
+                     RubyCode.build_from_source(ruby_code[:source])
+                   elsif ruby_code.is_a?(Hash) && ruby_code.has_key?(:ast)
+                     RubyCode.build_from_ast(ruby_code[:ast],
+                                             comments: ruby_code.fetch(:comments, []))
+                   else
+                     ruby_code
+                   end
+    end
+
+    def ast
+      ruby_code.ast
+    end
+
+    def source
+      ruby_code.source
+    end
+
+    def comments
+      ruby_code.comments
     end
 
     def is_class?
@@ -44,80 +60,38 @@ module DissociatedIntrospection
         nodes[1] = nodes[0].updated(:const, [nil, parent_class.to_sym])
         new_ast  = ast.updated(nil, nodes, nil)
       end
-      self.class.new(ast: new_ast)
-    end
 
-    class Def
-
-      def initialize(ast:)
-        @ast = ast
-      end
-
-      def name
-        ast.children[0]
-      end
-
-      def arguments
-        Unparser.unparse(ast.children[1])
-      end
-
-      def body
-        Unparser.unparse(ast.children[2])
-      end
-
-      def to_ruby_str
-        Unparser.unparse(ast)
-      end
-
-      private
-      attr_reader :ast
+      self.class.new(RubyCode.build_from_ast(new_ast, comments: comments))
     end
 
     def defs
-      class_begin.children.select { |n| n.try(:type) == :def }.map{|n| Def.new(ast: n)}
+      class_begin.children.select { |n| n.try(:type) == :def }.map { |n| Def.new(ast: n) }
     end
 
     def class_begin
-      find_class.children.find{|n| n.try(:type) == :begin}
+      find_class.children.find { |n| n.try(:type) == :begin }
     end
 
     def to_ruby_str
-      Unparser.unparse(ast)
+      source
     end
 
     def scrub_inner_classes
-      self.class.new(ast: find_class.updated(find_class.type, class_begin.updated(class_begin.type, class_begin.children.reject { |n| n.try(:type) == :class })))
-    end
-
-    def wrap_in_modules(modules)
-      return self if modules.nil? || modules.empty?
-      ruby_string = to_ruby_str
-      modules.split("::").reverse.each do |module_name|
-        ruby_string = wrap_module(module_name, ruby_string)
-      end
-      wrapped_ast = Parser::CurrentRuby.parse(ruby_string)
-      self.class.new(ast: wrapped_ast)
+      self.class.new RubyCode.build_from_ast(scrub_inner_classes_ast,
+                                             comments: comments)
     end
 
     private
 
-    def wrap_module(module_name, ruby)
-      <<-RUBY
-        module #{module_name}
-      #{ruby}
-        end
-      RUBY
+    def scrub_inner_classes_ast
+      find_class.updated(find_class.type,
+                         class_begin.updated(class_begin.type,
+                                             class_begin.children.reject { |n| n.try(:type) == :class }))
     end
-
-    attr_reader :source
 
     def find_class
       return ast if ast.try(:type) == :class
-      ast.to_a.select { |n|n.try(:type) == :class }.first
-    end
-
-    def ast
-      @ast ||= Parser::CurrentRuby.parse(source)
+      ast.to_a.select { |n| n.try(:type) == :class }.first
     end
 
     def nodes
