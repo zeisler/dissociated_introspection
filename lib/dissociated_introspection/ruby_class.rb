@@ -90,8 +90,18 @@ module DissociatedIntrospection
     end
 
     def find_class
-      return ast if ast.try(:type) == :class
-      ast.to_a.select { |n| n.try(:type) == :class }.first
+      depth_first_search(ast, :class)
+    end
+
+    def depth_first_search(node, target)
+      return false unless node.is_a?(Parser::AST::Node)
+      return node if node.type == target
+      if (children = node.children)
+        children.each do |kid|
+          v = depth_first_search(kid, target)
+          return v if v.is_a?(Parser::AST::Node)
+        end
+      end
     end
 
     def nodes

@@ -150,6 +150,20 @@ describe DissociatedIntrospection::RubyClass do
       expect(subject.modify_parent_class("Y::Z").to_ruby_str).to eq "class A < Y::Z\n  def method\n  end\nend"
     end
 
+    it "will change parent class const within a doubly nested class" do
+      subject = described_class.new source: <<-RUBY
+      module A
+        module B
+          class C < D
+            def method
+            end
+          end
+        end
+      end
+      RUBY
+      expect(subject.modify_parent_class("Y::Z").to_ruby_str).to eq "class C < Y::Z\n  def method\n  end\nend"
+    end
+
     it "if non set it will add the parent" do
       subject = described_class.new source: <<-RUBY
       class A
