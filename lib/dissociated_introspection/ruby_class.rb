@@ -85,7 +85,7 @@ module DissociatedIntrospection
       ary = []
       m = ast
       while m
-        if (m = depth_first_search(m, :module))
+        if (m = depth_first_search(m, :module, :class))
           name = m.to_a[0].to_a[1]
           ary << name unless name.nil?
           m = m.to_a[1]
@@ -106,12 +106,13 @@ module DissociatedIntrospection
       depth_first_search(ast, :class)
     end
 
-    def depth_first_search(node, target)
+    def depth_first_search(node, target, stop=nil)
       return false unless node.is_a?(Parser::AST::Node)
       return node if node.type == target
+      return false if stop && node.type == stop
       if (children = node.children)
         children.each do |kid|
-          v = depth_first_search(kid, target)
+          v = depth_first_search(kid, target, stop)
           return v if v.is_a?(Parser::AST::Node)
         end
       end

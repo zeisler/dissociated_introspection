@@ -300,6 +300,8 @@ RSpec.describe DissociatedIntrospection::RubyClass do
       module Api
         module Namespace
         class MyClass
+          module IgnoreMe
+          end
         end
         end
        end

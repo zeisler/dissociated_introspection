@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 0.4.1 - 2015-01-18
+### Fix
+- `RubyClass#module_nesting` could return modules that were nested inside of a class.
+
 ## 0.4.0 - 2015-01-18
 ### Enhancement
 - `RubyClass#module_nesting` returns an array of symbols representing the module namespacing that the class is within.
