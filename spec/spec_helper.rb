@@ -6,6 +6,11 @@ if ENV['CODECLIMATE_REPO_TOKEN']
 end
 
 RSpec.configure do |c|
-  # c.disable_monkey_patching!
-  c.seed = rand(99999)
+  c.disable_monkey_patching!
+  c.seed = "random"
+
+  c.mock_with :rspec do |mocks|
+    mocks.verify_doubled_constant_names = true
+    mocks.verify_partial_doubles = true
+  end
 end

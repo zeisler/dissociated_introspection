@@ -1,4 +1,3 @@
-require 'spec_helper'
 require 'dissociated_introspection/eval_sandbox'
 
 RSpec.describe DissociatedIntrospection::EvalSandbox do

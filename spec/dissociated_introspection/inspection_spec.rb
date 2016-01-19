@@ -1,4 +1,3 @@
-require 'spec_helper'
 require 'dissociated_introspection'
 
 RSpec.describe DissociatedIntrospection::Inspection do

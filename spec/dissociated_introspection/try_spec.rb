@@ -1,8 +1,7 @@
-require "spec_helper"
 require "dissociated_introspection/try"
 require "tempfile"
 
-describe DissociatedIntrospection::Try do
+RSpec.describe DissociatedIntrospection::Try do
   using DissociatedIntrospection::Try
 
   describe "Object.try" do

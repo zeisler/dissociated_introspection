@@ -1,10 +1,9 @@
-require "spec_helper"
 require "parser/current"
 require "unparser"
 require "dissociated_introspection/try"
 require "dissociated_introspection/ruby_class"
 
-describe DissociatedIntrospection::RubyClass do
+RSpec.describe DissociatedIntrospection::RubyClass do
 
   describe "#class_name" do
 
