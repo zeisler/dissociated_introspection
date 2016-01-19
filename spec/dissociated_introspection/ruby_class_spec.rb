@@ -274,4 +274,55 @@ describe DissociatedIntrospection::RubyClass do
       expect(subject.scrub_inner_classes.to_ruby_str).to eq("class include(MyModule) < def keep_me\nend\n  def self.hello\n  end\nend")
     end
   end
+
+  describe "module_nesting" do
+    subject { described_class.new(source: ruby_class) }
+
+    context "single nesting" do
+      let(:ruby_class) {
+        <<-RUBY
+      module Api
+        class MyClass < OtherClass
+          ParentModule::NestedModule
+        end
+       end
+        RUBY
+      }
+
+
+      it "returns the module nesting" do
+        expect(subject.module_nesting).to eq [:Api]
+      end
+    end
+
+    context "double nesting" do
+      let(:ruby_class) {
+        <<-RUBY
+      module Api
+        module Namespace
+        class MyClass
+        end
+        end
+       end
+        RUBY
+      }
+
+      it "returns the module nesting" do
+        expect(subject.module_nesting).to eq [:Api, :Namespace]
+      end
+    end
+
+    context "no nesting" do
+      let(:ruby_class) {
+        <<-RUBY
+        class MyClass
+        end
+        RUBY
+      }
+
+      it "returns the module nesting" do
+        expect(subject.module_nesting).to eq []
+      end
+    end
+  end
 end

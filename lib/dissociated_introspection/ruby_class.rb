@@ -39,7 +39,7 @@ module DissociatedIntrospection
     end
 
     def has_parent_class?
-      return false if find_class.nil?
+      return false unless find_class
       find_class.to_a[1].try(:type) == :const
     end
 
@@ -81,6 +81,19 @@ module DissociatedIntrospection
                                              comments: comments)
     end
 
+    def module_nesting
+      ary = []
+      m = ast
+      while m
+        if (m = depth_first_search(m, :module))
+          name = m.to_a[0].to_a[1]
+          ary << name unless name.nil?
+          m = m.to_a[1]
+        end
+      end
+      ary
+    end
+
     private
 
     def scrub_inner_classes_ast
@@ -102,6 +115,7 @@ module DissociatedIntrospection
           return v if v.is_a?(Parser::AST::Node)
         end
       end
+      return false
     end
 
     def nodes
