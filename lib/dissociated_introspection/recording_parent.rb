@@ -50,6 +50,6 @@ class RecordingParent < BasicObject
     end
   end
 
-  listen_to_defined_macros :attr_reader, :attr_writer, :attr_accessor, :prepend, :include, :extend
+  listen_to_defined_macros *DissociatedIntrospection.listen_to_defined_class_methods
 end
 

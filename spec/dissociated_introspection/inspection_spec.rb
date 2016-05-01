@@ -176,6 +176,74 @@ RSpec.describe DissociatedIntrospection::Inspection do
                                           { :attr_accessor => [[:baz]] }])
     end
 
+    context "alias_*" do
+      let(:ruby_class) {
+        <<-RUBY
+      class MyClass < OtherClass
+        def foo
+        end
+        alias_method_chain :foo, :bar
+
+        def bar
+        end
+
+        alias_method :foo, :baz
+      end
+        RUBY
+      }
+
+      it do
+        expect(subject.class_macros).to eq([{ :alias_method_chain => [[:foo, :bar]] },
+                                            { :alias_method => [[:foo, :baz]] }])
+      end
+    end
+
+    context "listen_to_defined_class_methods=" do
+      before do
+        class Module
+          def to_be_recorded_method(*ags)
+          end
+        end
+      end
+
+      let(:ruby_class) {
+        <<-RUBY
+        class MyClass
+          to_be_recorded_method :hello
+        end
+        RUBY
+      }
+
+      before do
+        DissociatedIntrospection.listen_to_defined_class_methods = :to_be_recorded_method
+      end
+
+      it do
+        expect(subject.class_macros).to eq( [{:to_be_recorded_method=>[[:hello]]}])
+      end
+    end
+
+    context "non recorded class method" do
+      before do
+        class Module
+          def non_recorded_class_method(*ags)
+          end
+        end
+      end
+
+      let(:ruby_class) {
+        <<-RUBY
+      class MyClass < OtherClass
+        non_recorded_class_method :hello
+      end
+        RUBY
+      }
+
+      it do
+        expect(subject.class_macros).to eq([])
+      end
+    end
+
     context "listens to methods inclusion macros" do
       let(:ruby_class) {
         <<-RUBY

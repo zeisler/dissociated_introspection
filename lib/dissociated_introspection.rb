@@ -8,3 +8,27 @@ require 'dissociated_introspection/ruby_code'
 require 'dissociated_introspection/ruby_class'
 require 'dissociated_introspection/ruby_class/def'
 require 'dissociated_introspection/inspection'
+
+module DissociatedIntrospection
+  LISTEN_TO_CLASS_METHODS = [
+    :attr_reader,
+    :attr_writer,
+    :attr_accessor,
+    :prepend,
+    :include,
+    :extend,
+    :alias_attribute,
+    :alias_method,
+    :alias_method_chain
+  ]
+
+  class << self
+    def listen_to_defined_class_methods=(*methods)
+      listen_to_defined_class_methods.concat(methods)
+    end
+
+    def listen_to_defined_class_methods
+      @listen_to_defined_class_methods ||= LISTEN_TO_CLASS_METHODS
+    end
+  end
+end
