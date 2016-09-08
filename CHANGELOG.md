@@ -1,7 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## 0.5 - 2016-04-30
+## 0.6.0 - 2016-09-08
+### Enhancement
+- `DissociatedIntrospection::RubyClass#defs` now returns associated comments
+
+## 0.5.0 - 2016-04-30
 ### Enhancement
 - `DissociatedIntrospection.listen_to_defined_class_methods=` In addition to ruby methods like
 attr_reader other DSL class methods can be recorded if specified.
