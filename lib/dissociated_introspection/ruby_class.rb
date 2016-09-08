@@ -65,7 +65,12 @@ module DissociatedIntrospection
     end
 
     def defs
-      class_begin.children.select { |n| n.try(:type) == :def }.map { |n| Def.new(ast: n) }
+      class_begin.children.select { |n| n.try(:type) == :def }.map do |n|
+        def_comments = comments.select do |comment|
+          comment.location.last_line+1 == n.location.first_line
+        end
+        Def.new(RubyCode.build_from_ast(n, comments: def_comments))
+      end
     end
 
     def class_begin

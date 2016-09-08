@@ -215,6 +215,8 @@ RSpec.describe DissociatedIntrospection::RubyClass do
         def method1(arg, named_arg:)
           1+1
         end
+
+        # This is a comment
         def method2(arg=nil)
           puts "hello"
         end
@@ -222,7 +224,9 @@ RSpec.describe DissociatedIntrospection::RubyClass do
       RUBY
     }
 
-    subject { described_class.new(source: ruby_class) }
+    subject { described_class.new(
+      DissociatedIntrospection::RubyCode.build_from_source(ruby_class, parse_with_comments: true)
+    ) }
 
     it "returns a list of methods as Def object" do
       expect(subject.defs.map(&:class).uniq).to eq [described_class::Def]
@@ -247,7 +251,7 @@ RSpec.describe DissociatedIntrospection::RubyClass do
 
       it "to_ruby_str" do
         expect(subject.defs.first.to_ruby_str).to eq "def method1(arg, named_arg:)\n  1 + 1\nend"
-        expect(subject.defs.last.to_ruby_str).to eq "def method2(arg = nil)\n  puts(\"hello\")\nend"
+        expect(subject.defs.last.to_ruby_str).to eq "# This is a comment\ndef method2(arg = nil)\n  puts(\"hello\")\nend"
       end
     end
   end
