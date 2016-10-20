@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 0.7.0 - 2016-10-19
+### Fix
+- DissociatedIntrospection::Inspection#parsed_source now returns RubyClass with comments
+
 ## 0.6.0 - 2016-09-08
 ### Enhancement
 - `DissociatedIntrospection::RubyClass#defs` now returns associated comments
