@@ -5,7 +5,7 @@ module DissociatedIntrospection
 
     def initialize(ruby_code)
       @ruby_code = if ruby_code.is_a?(Hash) && ruby_code.has_key?(:source)
-                     RubyCode.build_from_source(ruby_code[:source])
+                     RubyCode.build_from_source(ruby_code[:source], parse_with_comments: ruby_code[:parse_with_comments])
                    elsif ruby_code.is_a?(Hash) && ruby_code.has_key?(:ast)
                      RubyCode.build_from_ast(ruby_code[:ast],
                                              comments: ruby_code.fetch(:comments, []))

@@ -50,7 +50,7 @@ module DissociatedIntrospection
 
     # @return [DissociatedIntrospection::RubyClass]
     def parsed_source
-      @parsed_source ||= RubyClass.new(source: file.read)
+      @parsed_source ||= RubyClass.new(source: file.read, parse_with_comments: true)
     end
 
     # @return [Module]
