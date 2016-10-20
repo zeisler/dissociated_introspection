@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 0.7.1 - 2016-10-20
+### Fix
+- `DissociatedIntrospection::RubyClass#defs` fixed parse issue when class has one method.
+
 ## 0.7.0 - 2016-10-19
 ### Fix
 - DissociatedIntrospection::Inspection#parsed_source now returns RubyClass with comments

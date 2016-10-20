@@ -74,7 +74,7 @@ module DissociatedIntrospection
     end
 
     def class_begin
-      find_class.children.find { |n| n.try(:type) == :begin }
+      find_class.children.find { |n| n.try(:type) == :begin } || find_class
     end
 
     def to_ruby_str

@@ -12,11 +12,12 @@ RSpec.describe DissociatedIntrospection::RubyClass do
       require "uri-open"
 
       class A < B
-        def method
+        def method1
         end
       end
       RUBY
       expect(subject.class_name).to eq "A"
+      expect(subject.defs.count).to eq 1
     end
   end
 
