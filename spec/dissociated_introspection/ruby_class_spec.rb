@@ -2,8 +2,36 @@ require "parser/current"
 require "unparser"
 require "dissociated_introspection/try"
 require "dissociated_introspection/ruby_class"
+require "dissociated_introspection/block"
+require "dissociated_introspection/method_call"
 
 RSpec.describe DissociatedIntrospection::RubyClass do
+
+  describe "class_method_calls" do
+    it "method call with primitives" do
+      subject = described_class.new source: <<-RUBY
+      class A
+        attr_reader :name, "hello"
+      end
+      RUBY
+      expect(subject.class_method_calls.first.to_h).to eq(name: :attr_reader, arguments: [:name, "hello"])
+    end
+
+    it "methods call with lambda block" do
+      subject = described_class.new source: <<-RUBY
+      class A
+        scope :find_all_people, ->(a, _) {
+          value = a + 1
+          return 3 if value == 2
+        }
+      end
+      RUBY
+      expect(subject.class_method_calls.first.name).to eq(:scope)
+      expect(subject.class_method_calls.first.arguments.first).to eq(:find_all_people)
+      expect(subject.class_method_calls.first.arguments.last.body.source).to eq("value = (a + 1)\nif (value == 2)\n  return 3\nend")
+      expect(subject.class_method_calls.first.arguments.last.arguments.source).to eq("a, _")
+    end
+  end
 
   describe "#class_name" do
 
@@ -45,7 +73,7 @@ RSpec.describe DissociatedIntrospection::RubyClass do
     end
   end
 
-  describe "#has_parent_class?" do
+  describe "#parent_class?" do
 
     it "has parent class" do
       subject = described_class.new source: <<-RUBY
@@ -55,7 +83,7 @@ RSpec.describe DissociatedIntrospection::RubyClass do
         end
       end
       RUBY
-      expect(subject.has_parent_class?).to eq true
+      expect(subject.parent_class?).to eq true
 
       subject = described_class.new source: <<-RUBY
       class A < B
@@ -63,7 +91,7 @@ RSpec.describe DissociatedIntrospection::RubyClass do
         end
       end
       RUBY
-      expect(subject.has_parent_class?).to eq true
+      expect(subject.parent_class?).to eq true
     end
 
     it "has parent class within module" do
@@ -75,7 +103,7 @@ RSpec.describe DissociatedIntrospection::RubyClass do
         end
       end
       RUBY
-      expect(subject.has_parent_class?).to eq true
+      expect(subject.parent_class?).to eq true
     end
 
     it "has no parent class" do
@@ -86,7 +114,7 @@ RSpec.describe DissociatedIntrospection::RubyClass do
         end
       end
       RUBY
-      expect(subject.has_parent_class?).to eq false
+      expect(subject.parent_class?).to eq false
 
       subject = described_class.new source: <<-RUBY
       class A
@@ -94,7 +122,7 @@ RSpec.describe DissociatedIntrospection::RubyClass do
         end
       end
       RUBY
-      expect(subject.has_parent_class?).to eq false
+      expect(subject.parent_class?).to eq false
     end
 
     it "its not a class" do
@@ -103,7 +131,7 @@ RSpec.describe DissociatedIntrospection::RubyClass do
 
       end
       RUBY
-      expect(subject.has_parent_class?).to eq false
+      expect(subject.parent_class?).to eq false
     end
   end
 
@@ -116,7 +144,7 @@ RSpec.describe DissociatedIntrospection::RubyClass do
         end
       end
       RUBY
-      expect(subject.modify_parent_class("C").to_ruby_str).to eq "class A < C\n  def method(name:)\n  end\nend"
+      expect(subject.modify_parent_class("C").source).to eq "class A < C\n  def method(name:)\n  end\nend"
 
       subject = described_class.new source: <<-RUBY
       require "uri-open"
@@ -125,7 +153,7 @@ RSpec.describe DissociatedIntrospection::RubyClass do
         end
       end
       RUBY
-      expect(subject.modify_parent_class("C").to_ruby_str).to eq "class A < C\n  def method(name:)\n  end\nend"
+      expect(subject.modify_parent_class("C").source).to eq "class A < C\n  def method(name:)\n  end\nend"
     end
 
     it "will change parent class const with module" do
@@ -135,7 +163,7 @@ RSpec.describe DissociatedIntrospection::RubyClass do
         end
       end
       RUBY
-      expect(subject.modify_parent_class("X::Y").to_ruby_str).to eq "class A < X::Y\n  def method(name:)\n  end\nend"
+      expect(subject.modify_parent_class("X::Y").source).to eq "class A < X::Y\n  def method(name:)\n  end\nend"
     end
 
     it "will change parent class const within a module but will not return the module" do
@@ -147,7 +175,7 @@ RSpec.describe DissociatedIntrospection::RubyClass do
         end
       end
       RUBY
-      expect(subject.modify_parent_class("Y::Z").to_ruby_str).to eq "class A < Y::Z\n  def method\n  end\nend"
+      expect(subject.modify_parent_class("Y::Z").source).to eq "class A < Y::Z\n  def method\n  end\nend"
     end
 
     it "will change parent class const within a doubly nested class" do
@@ -161,7 +189,7 @@ RSpec.describe DissociatedIntrospection::RubyClass do
         end
       end
       RUBY
-      expect(subject.modify_parent_class("Y::Z").to_ruby_str).to eq "class C < Y::Z\n  def method\n  end\nend"
+      expect(subject.modify_parent_class("Y::Z").source).to eq "class C < Y::Z\n  def method\n  end\nend"
     end
 
     it "if non set it will add the parent" do
@@ -171,7 +199,7 @@ RSpec.describe DissociatedIntrospection::RubyClass do
         end
       end
       RUBY
-      expect(subject.modify_parent_class("C").to_ruby_str).to eq "class A < C\n  def method(*args)\n  end\nend"
+      expect(subject.modify_parent_class("C").source).to eq "class A < C\n  def method(*args)\n  end\nend"
     end
   end
 
@@ -184,11 +212,11 @@ RSpec.describe DissociatedIntrospection::RubyClass do
         end
       end
       RUBY
-      expect(subject.change_class_name("C").to_ruby_str).to eq "class C\n  def method(options = {})\n  end\nend"
+      expect(subject.change_class_name("C").source).to eq "class C\n  def method(options = {})\n  end\nend"
     end
   end
 
-  describe "#is_class?" do
+  describe "#class?" do
 
     it "is a class" do
       subject = described_class.new source: <<-RUBY
@@ -197,7 +225,7 @@ RSpec.describe DissociatedIntrospection::RubyClass do
         end
       end
       RUBY
-      expect(subject.is_class?).to eq true
+      expect(subject.class?).to eq true
     end
 
     it "is not a class" do
@@ -205,7 +233,7 @@ RSpec.describe DissociatedIntrospection::RubyClass do
         def method(options={})
         end
       RUBY
-      expect(subject.is_class?).to eq false
+      expect(subject.class?).to eq false
     end
   end
   
@@ -225,9 +253,14 @@ RSpec.describe DissociatedIntrospection::RubyClass do
       RUBY
     }
 
-    subject { described_class.new(
-      DissociatedIntrospection::RubyCode.build_from_source(ruby_class, parse_with_comments: true)
-    ) }
+    subject {
+      described_class.new(
+        DissociatedIntrospection::RubyCode.build_from_source(
+          ruby_class,
+          parse_with_comments: true
+        )
+      )
+    }
 
     it "returns a list of methods as Def object" do
       expect(subject.defs.map(&:class).uniq).to eq [described_class::Def]
@@ -250,9 +283,61 @@ RSpec.describe DissociatedIntrospection::RubyClass do
         expect(subject.defs.last.body).to eq "puts(\"hello\")"
       end
 
-      it "to_ruby_str" do
-        expect(subject.defs.first.to_ruby_str).to eq "def method1(arg, named_arg:)\n  1 + 1\nend"
-        expect(subject.defs.last.to_ruby_str).to eq "# This is a comment\ndef method2(arg = nil)\n  puts(\"hello\")\nend"
+      it "source" do
+        expect(subject.defs.first.source).to eq "def method1(arg, named_arg:)\n  1 + 1\nend"
+        expect(subject.defs.last.source).to eq "# This is a comment\ndef method2(arg = nil)\n  puts(\"hello\")\nend"
+      end
+    end
+  end
+
+  describe "class_defs" do
+    let(:ruby_class){
+      <<-RUBY
+      class A
+        # my comment
+        def self.method1(arg, named_arg:)
+          1+1
+        end
+
+        class << self
+          # This is a comment
+          def method2(arg=nil)
+            puts "hello"
+          end
+        end
+      end
+      RUBY
+    }
+
+    subject {
+      described_class.new(
+        DissociatedIntrospection::RubyCode.build_from_source(
+          ruby_class,
+          parse_with_comments: true
+        )
+      )
+    }
+
+    describe "Def object" do
+
+      it "name" do
+        expect(subject.class_defs.first.name).to eq :method1
+        expect(subject.class_defs.last.name).to eq :method2
+      end
+
+      it "argument" do
+        expect(subject.class_defs.first.arguments).to eq "arg, named_arg:"
+        expect(subject.class_defs.last.arguments).to eq "arg = nil"
+      end
+
+      it "body" do
+        expect(subject.class_defs.first.body).to eq "1 + 1"
+        expect(subject.class_defs.last.body).to eq "puts(\"hello\")"
+      end
+
+      it "source" do
+        expect(subject.class_defs.first.source).to eq "# my comment\ndef method1(arg, named_arg:)\n  1 + 1\nend"
+        expect(subject.class_defs.last.source).to eq "# This is a comment\ndef method2(arg = nil)\n  puts(\"hello\")\nend"
       end
     end
   end
@@ -275,7 +360,7 @@ RSpec.describe DissociatedIntrospection::RubyClass do
     subject { described_class.new(source: ruby_class) }
 
     it "will return a ruby string without the inner class" do
-      expect(subject.scrub_inner_classes.to_ruby_str).to eq("class include(MyModule) < def keep_me\nend\n  def self.hello\n  end\nend")
+      expect(subject.scrub_inner_classes.source).to eq("class include(MyModule) < def keep_me\nend\n  def self.hello\n  end\nend")
     end
   end
 

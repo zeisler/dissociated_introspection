@@ -1,6 +1,7 @@
 module DissociatedIntrospection
   class RubyClass
     attr_reader :ruby_code
+    extend Forwardable
     using Try
 
     def initialize(ruby_code)
@@ -14,19 +15,9 @@ module DissociatedIntrospection
                    end
     end
 
-    def ast
-      ruby_code.ast
-    end
+    def_delegators :ruby_code, :ast, :source, :comments
 
-    def source
-      ruby_code.source
-    end
-
-    def comments
-      ruby_code.comments
-    end
-
-    def is_class?
+    def class?
       ast.type == :class
     end
 
@@ -38,25 +29,25 @@ module DissociatedIntrospection
       Unparser.unparse(find_class.to_a[1])
     end
 
-    def has_parent_class?
+    def parent_class?
       return false unless find_class
       find_class.to_a[1].try(:type) == :const
     end
 
     def change_class_name(class_name)
-      reset_nodes
+      nodes    = ast.to_a.dup
       nodes[0] = Parser::CurrentRuby.parse(class_name)
       new_ast  = ast.updated(nil, nodes, nil)
       self.class.new(ast: new_ast)
     end
 
     def modify_parent_class(parent_class)
-      reset_nodes
-      if has_parent_class?
+      if parent_class?
         class_node    = find_class.to_a.dup
         class_node[1] = Parser::CurrentRuby.parse(parent_class.to_s)
         new_ast       = find_class.updated(nil, class_node, nil)
       else
+        nodes    = ast.to_a.dup
         nodes[1] = nodes[0].updated(:const, [nil, parent_class.to_sym])
         new_ast  = ast.updated(nil, nodes, nil)
       end
@@ -65,11 +56,18 @@ module DissociatedIntrospection
     end
 
     def defs
-      class_begin.children.select { |n| n.try(:type) == :def }.map do |n|
-        def_comments = comments.select do |comment|
-          comment.location.last_line+1 == n.location.first_line
-        end
-        Def.new(RubyCode.build_from_ast(n, comments: def_comments))
+      class_begin.children.select { |n| n.try(:type) == :def }.map(&method(:create_def))
+    end
+
+    def class_defs
+      class_begin.children.select { |n| [:defs, :sclass].include? n.try(:type) }.map do |n|
+        new_n = if n.type == :defs # def self.method;end
+                  n.updated(:def, n.children[1..-1])
+                elsif n.type == :sclass # class >> self; def method;end
+                  n.updated(:def, n.children[1].children, location: n.children[1].location)
+                end
+
+        create_def(new_n)
       end
     end
 
@@ -77,18 +75,16 @@ module DissociatedIntrospection
       find_class.children.find { |n| n.try(:type) == :begin } || find_class
     end
 
-    def to_ruby_str
-      source
-    end
-
     def scrub_inner_classes
-      self.class.new RubyCode.build_from_ast(scrub_inner_classes_ast,
-                                             comments: comments)
+      self.class.new RubyCode.build_from_ast(
+        scrub_inner_classes_ast,
+        comments: comments
+      )
     end
 
     def module_nesting
       ary = []
-      m = ast
+      m   = ast
       while m
         if (m = depth_first_search(m, :module, :class))
           name = m.to_a[0].to_a[1]
@@ -99,7 +95,20 @@ module DissociatedIntrospection
       ary
     end
 
+    def class_method_calls
+      class_begin.children.select { |n| n.try(:type) == :send }.map do |ast|
+        MethodCall.new(RubyCode.build_from_ast(ast))
+      end
+    end
+
     private
+
+    def create_def(n)
+      def_comments = comments.select do |comment|
+        comment.location.last_line+1 == n.location.first_line
+      end
+      Def.new(RubyCode.build_from_ast(n, comments: def_comments))
+    end
 
     def scrub_inner_classes_ast
       find_class.updated(find_class.type,
@@ -121,15 +130,7 @@ module DissociatedIntrospection
           return v if v.is_a?(Parser::AST::Node)
         end
       end
-      return false
-    end
-
-    def nodes
-      @nodes ||= ast.to_a.dup
-    end
-
-    def reset_nodes
-      @nodes = nil
+      false
     end
   end
 end

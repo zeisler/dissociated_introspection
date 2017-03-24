@@ -83,7 +83,7 @@ module DissociatedIntrospection
                               else
                                 file.path
                               end
-      load_sandbox(OpenStruct.new(read: modified_class_source.to_ruby_str, path: path))
+      load_sandbox(OpenStruct.new(read: modified_class_source.source, path: path))
     end
 
     def load_sandbox(file)

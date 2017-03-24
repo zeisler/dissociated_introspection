@@ -53,8 +53,6 @@ module DissociatedIntrospection
       @source = @source.nil? ? source_from_ast : @source
     end
 
-    alias_method :to_ruby_str, :source
-
     # @return [String]
     def source_from_ast
       Unparser.unparse(ast, comments)

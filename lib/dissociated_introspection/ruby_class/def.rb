@@ -18,8 +18,8 @@ module DissociatedIntrospection
         Unparser.unparse(ruby_code.ast.children[2])
       end
 
-      def to_ruby_str
-        ruby_code.to_ruby_str
+      def source
+        ruby_code.source
       end
 
       private
