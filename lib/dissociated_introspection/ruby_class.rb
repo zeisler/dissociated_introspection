@@ -71,6 +71,14 @@ module DissociatedIntrospection
       end
     end
 
+    def inspect_methods(type=:instance_methods)
+      public_send(if type == :instance_methods
+                    :defs
+                  elsif [:methods, :class_methods].include?(type)
+                    :class_defs
+                  end)
+    end
+
     def class_begin
       find_class.children.find { |n| n.try(:type) == :begin } || find_class
     end

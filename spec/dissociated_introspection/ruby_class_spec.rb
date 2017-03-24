@@ -287,6 +287,13 @@ RSpec.describe DissociatedIntrospection::RubyClass do
         expect(subject.defs.first.source).to eq "def method1(arg, named_arg:)\n  1 + 1\nend"
         expect(subject.defs.last.source).to eq "# This is a comment\ndef method2(arg = nil)\n  puts(\"hello\")\nend"
       end
+
+      describe "inspect_methods" do
+        it "name" do
+          expect(subject.inspect_methods(:instance_methods).first.name).to eq :method1
+          expect(subject.inspect_methods(:instance_methods).last.name).to eq :method2
+        end
+      end
     end
   end
 
@@ -338,6 +345,13 @@ RSpec.describe DissociatedIntrospection::RubyClass do
       it "source" do
         expect(subject.class_defs.first.source).to eq "# my comment\ndef method1(arg, named_arg:)\n  1 + 1\nend"
         expect(subject.class_defs.last.source).to eq "# This is a comment\ndef method2(arg = nil)\n  puts(\"hello\")\nend"
+      end
+
+      describe "inspect_methods" do
+        it "name" do
+          expect(subject.inspect_methods(:class_methods).first.name).to eq :method1
+          expect(subject.inspect_methods(:methods).last.name).to eq :method2
+        end
       end
     end
   end

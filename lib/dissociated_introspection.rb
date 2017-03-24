@@ -8,6 +8,7 @@ require 'dissociated_introspection/ruby_code'
 require 'dissociated_introspection/ruby_class'
 require 'dissociated_introspection/ruby_class/def'
 require 'dissociated_introspection/inspection'
+require 'dissociated_introspection/method_call'
 
 module DissociatedIntrospection
   LISTEN_TO_CLASS_METHODS = [
