@@ -44,7 +44,7 @@ new_ruby_class = ruby_class.modify_parent_class(:C)
 new_ruby_class.parent_class_name
     # => "C"
     
-new_ruby_class.to_ruby_str
+new_ruby_class.source
     # => "class A < C\n  def method\n  end\nend"
     
 ruby_class.defs.first.name
