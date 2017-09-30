@@ -5,11 +5,16 @@ module DissociatedIntrospection
     using Try
 
     def initialize(ruby_code)
-      @ruby_code = if ruby_code.is_a?(Hash) && ruby_code.has_key?(:source)
-                     RubyCode.build_from_source(ruby_code[:source], parse_with_comments: ruby_code[:parse_with_comments])
-                   elsif ruby_code.is_a?(Hash) && ruby_code.has_key?(:ast)
-                     RubyCode.build_from_ast(ruby_code[:ast],
-                                             comments: ruby_code.fetch(:comments, []))
+      @ruby_code = if ruby_code.is_a?(Hash) && ruby_code.key?(:source)
+                     RubyCode.build_from_source(
+                       ruby_code[:source],
+                       parse_with_comments: ruby_code[:parse_with_comments]
+                     )
+                   elsif ruby_code.is_a?(Hash) && ruby_code.key?(:ast)
+                     RubyCode.build_from_ast(
+                       ruby_code[:ast],
+                       comments: ruby_code.fetch(:comments, [])
+                     )
                    else
                      ruby_code
                    end
@@ -60,15 +65,13 @@ module DissociatedIntrospection
     end
 
     def class_defs
-      class_begin.children.select { |n| [:defs, :sclass].include? n.try(:type) }.map do |n|
-        new_n = if n.type == :defs # def self.method;end
-                  n.updated(:def, n.children[1..-1])
-                elsif n.type == :sclass # class >> self; def method;end
-                  n.updated(:def, n.children[1].children, location: n.children[1].location)
-                end
-
-        create_def(new_n)
+      ns = class_begin.children.select { |n| :defs == n.try(:type) }.map do |n|
+        create_def(n.updated(:def, n.children[1..-1]))
       end
+      ns2 = class_begin.children.select { |n| :sclass == n.try(:type) }.flat_map do |n|
+        n.children[1].children.select { |n| n.try(:type) == :def }.map(&method(:create_def))
+      end
+      [*ns, *ns2]
     end
 
     def inspect_methods(type=:instance_methods)

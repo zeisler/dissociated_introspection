@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 0.8.1 - 2017-09-30
+### Fix
+- DissociatedIntrospection::RubyClass#class_defs failed to parse class methods with `class >> self; end;`
+
 ## 0.8.0 - 2017-03-24
 ### Enhancement
 - DissociatedIntrospection::RubyClass#class_defs returns same api as #defs

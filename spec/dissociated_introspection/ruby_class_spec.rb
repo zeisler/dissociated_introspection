@@ -311,6 +311,10 @@ RSpec.describe DissociatedIntrospection::RubyClass do
           def method2(arg=nil)
             puts "hello"
           end
+
+          def method3(**args)
+            puts "goodbye"
+          end
         end
       end
       RUBY
@@ -329,28 +333,33 @@ RSpec.describe DissociatedIntrospection::RubyClass do
 
       it "name" do
         expect(subject.class_defs.first.name).to eq :method1
-        expect(subject.class_defs.last.name).to eq :method2
+        expect(subject.class_defs[1].name).to eq :method2
+        expect(subject.class_defs[2].name).to eq :method3
       end
 
       it "argument" do
         expect(subject.class_defs.first.arguments).to eq "arg, named_arg:"
-        expect(subject.class_defs.last.arguments).to eq "arg = nil"
+        expect(subject.class_defs[1].arguments).to eq "arg = nil"
+        expect(subject.class_defs[2].arguments).to eq "**args"
       end
 
       it "body" do
         expect(subject.class_defs.first.body).to eq "1 + 1"
-        expect(subject.class_defs.last.body).to eq "puts(\"hello\")"
+        expect(subject.class_defs[1].body).to eq "puts(\"hello\")"
+        expect(subject.class_defs[2].body).to eq "puts(\"goodbye\")"
       end
 
       it "source" do
         expect(subject.class_defs.first.source).to eq "# my comment\ndef method1(arg, named_arg:)\n  1 + 1\nend"
-        expect(subject.class_defs.last.source).to eq "# This is a comment\ndef method2(arg = nil)\n  puts(\"hello\")\nend"
+        expect(subject.class_defs[1].source).to eq "# This is a comment\ndef method2(arg = nil)\n  puts(\"hello\")\nend"
+        expect(subject.class_defs[2].source).to eq "def method3(**args)\n  puts(\"goodbye\")\nend"
       end
 
       describe "inspect_methods" do
         it "name" do
           expect(subject.inspect_methods(:class_methods).first.name).to eq :method1
-          expect(subject.inspect_methods(:methods).last.name).to eq :method2
+          expect(subject.inspect_methods(:methods)[1].name).to eq :method2
+          expect(subject.inspect_methods(:methods)[2].name).to eq :method3
         end
       end
     end
