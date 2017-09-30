@@ -355,6 +355,26 @@ RSpec.describe DissociatedIntrospection::RubyClass do
         expect(subject.class_defs[2].source).to eq "def method3(**args)\n  puts(\"goodbye\")\nend"
       end
 
+      context "single method" do
+        let(:ruby_class){
+          <<-RUBY
+          class A
+            class << self
+              def foo
+                :buz
+              end
+            end
+          end
+          RUBY
+        }
+
+        it "class_defs" do
+          expect(subject.class_defs.first.name).to eq :foo
+          expect(subject.class_defs.first.arguments).to eq ""
+          expect(subject.class_defs.first.body).to eq ":buz"
+        end
+      end
+
       describe "inspect_methods" do
         it "name" do
           expect(subject.inspect_methods(:class_methods).first.name).to eq :method1

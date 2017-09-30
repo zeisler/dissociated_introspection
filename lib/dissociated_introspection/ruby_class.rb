@@ -69,6 +69,7 @@ module DissociatedIntrospection
         create_def(n.updated(:def, n.children[1..-1]))
       end
       ns2 = class_begin.children.select { |n| :sclass == n.try(:type) }.flat_map do |n|
+        next create_def(n.children[1]) if n.children[1].type == :def
         n.children[1].children.select { |n| n.try(:type) == :def }.map(&method(:create_def))
       end
       [*ns, *ns2]
