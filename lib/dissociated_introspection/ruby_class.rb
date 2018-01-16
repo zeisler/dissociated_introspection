@@ -26,10 +26,12 @@ module DissociatedIntrospection
       ast.type == :class
     end
 
+    # @return [String]
     def class_name
       Unparser.unparse(find_class.to_a[0])
     end
 
+    # @return [String]
     def parent_class_name
       Unparser.unparse(find_class.to_a[1])
     end
@@ -39,6 +41,7 @@ module DissociatedIntrospection
       find_class.to_a[1].try(:type) == :const
     end
 
+    # @return [DissociatedIntrospection::RubyClass]
     def change_class_name(class_name)
       nodes    = ast.to_a.dup
       nodes[0] = Parser::CurrentRuby.parse(class_name)
@@ -46,6 +49,7 @@ module DissociatedIntrospection
       self.class.new(ast: new_ast)
     end
 
+    # @return [DissociatedIntrospection::RubyClass]
     def modify_parent_class(parent_class)
       if parent_class?
         class_node    = find_class.to_a.dup
@@ -60,10 +64,12 @@ module DissociatedIntrospection
       self.class.new(RubyCode.build_from_ast(new_ast, comments: comments))
     end
 
+    # @return [DissociatedIntrospection::RubyClass::Def]
     def defs
       class_begin.children.select { |n| n.try(:type) == :def }.map(&method(:create_def))
     end
 
+    # @return [DissociatedIntrospection::RubyClass::Def]
     def class_defs
       ns = class_begin.children.select { |n| :defs == n.try(:type) }.map do |n|
         create_def(n.updated(:def, n.children[1..-1]))
@@ -83,10 +89,7 @@ module DissociatedIntrospection
                   end)
     end
 
-    def class_begin
-      find_class.children.find { |n| n.try(:type) == :begin } || find_class
-    end
-
+    # @return [RubyClass]
     def scrub_inner_classes
       self.class.new RubyCode.build_from_ast(
         scrub_inner_classes_ast,
@@ -94,19 +97,38 @@ module DissociatedIntrospection
       )
     end
 
+    # @return [Array[Symbol]]
     def module_nesting
       ary = []
       m   = ast
       while m
-        if (m = depth_first_search(m, :module, :class))
-          name = m.to_a[0].to_a[1]
-          ary << name unless name.nil?
-          m = m.to_a[1]
-        end
+        next unless (m = depth_first_search(m, :module, :class))
+        name = m.to_a[0].to_a[1]
+        ary << name unless name.nil?
+        m = m.to_a[1]
       end
       ary
     end
 
+    # @return [Array<DissociatedIntrospection::RubyCode>]
+    def defined_nested_modules
+      class_begin.children.select { |n| n.try(:type) == :module }.map do |m|
+        RubyCode.build_from_ast(
+          m
+        )
+      end
+    end
+
+    # @return [Array<DissociatedIntrospection::RubyCode>]
+    def defined_nested_classes
+      class_begin.children.select { |n| n.try(:type) == :class }.map do |m|
+        RubyCode.build_from_ast(
+          m
+        )
+      end
+    end
+
+    # @return [DissociatedIntrospection::MethodCall]
     def class_method_calls
       class_begin.children.select { |n| n.try(:type) == :send }.map do |ast|
         MethodCall.new(RubyCode.build_from_ast(ast))
@@ -114,6 +136,10 @@ module DissociatedIntrospection
     end
 
     private
+
+    def class_begin
+      find_class.children.find { |n| n.try(:type) == :begin } || find_class
+    end
 
     def create_def(n)
       def_comments = comments.select do |comment|

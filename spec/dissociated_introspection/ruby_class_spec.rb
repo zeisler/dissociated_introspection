@@ -407,6 +407,48 @@ RSpec.describe DissociatedIntrospection::RubyClass do
     end
   end
 
+  describe "#defined_nested_modules" do
+    let(:ruby_class) {
+      <<-RUBY
+      require "bla"
+      class A
+        module MyError
+          def hello
+            :good_day
+          end
+        end
+      end
+      RUBY
+    }
+
+    subject { described_class.new(source: ruby_class) }
+
+    it "RubyCode object of defined nested modules" do
+      expect(subject.defined_nested_modules.map(&:source)).to eq(["module MyError\n  def hello\n    :good_day\n  end\nend"])
+    end
+  end
+
+  describe "#defined_nested_classes" do
+    let(:ruby_class) {
+      <<-RUBY
+      require "bla"
+      class A
+        class MyError
+          def hello
+            :good_day
+          end
+        end
+      end
+      RUBY
+    }
+
+    subject { described_class.new(source: ruby_class) }
+
+    it "RubyCode object of defined nested classess" do
+      expect(subject.defined_nested_classes.map(&:source)).to eq(["class MyError\n  def hello\n    :good_day\n  end\nend"])
+    end
+  end
+
   describe "module_nesting" do
     subject { described_class.new(source: ruby_class) }
 
@@ -420,7 +462,6 @@ RSpec.describe DissociatedIntrospection::RubyClass do
        end
         RUBY
       }
-
 
       it "returns the module nesting" do
         expect(subject.module_nesting).to eq [:Api]
