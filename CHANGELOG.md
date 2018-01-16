@@ -1,5 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
+
+## 0.9.1 - 2018-01-16
+### Fix
+- `DissociatedIntrospection::RubyClass#class_begin` added back to public API
+
 ## 0.9.0 - 2018-01-16
 ### Enhancement
 - `DissociatedIntrospection::RubyClass#defined_nested_modules` and #defined_nested_classes returns an array of `RubyCode`.

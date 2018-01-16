@@ -7,6 +7,18 @@ require "dissociated_introspection/method_call"
 
 RSpec.describe DissociatedIntrospection::RubyClass do
 
+  it "#class_begin" do
+    subject = described_class.new source: <<-RUBY
+      module C
+        class A < B
+          def method
+          end
+        end
+      end
+    RUBY
+    expect(subject.class_begin.to_s).to eq "(class\n  (const nil :A)\n  (const nil :B)\n  (def :method\n    (args) nil))"
+  end
+
   describe "class_method_calls" do
     it "method call with primitives" do
       subject = described_class.new source: <<-RUBY
@@ -417,6 +429,8 @@ RSpec.describe DissociatedIntrospection::RubyClass do
             :good_day
           end
         end
+        include MyError
+        
       end
       RUBY
     }

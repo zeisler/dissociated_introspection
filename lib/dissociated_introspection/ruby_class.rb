@@ -135,11 +135,12 @@ module DissociatedIntrospection
       end
     end
 
-    private
-
+    # @return [AST]
     def class_begin
       find_class.children.find { |n| n.try(:type) == :begin } || find_class
     end
+
+    private
 
     def create_def(n)
       def_comments = comments.select do |comment|
