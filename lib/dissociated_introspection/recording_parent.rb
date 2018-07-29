@@ -1,7 +1,5 @@
 class RecordingParent < BasicObject
-
   class << self
-
     def method_missing(m, *args, &block)
       __missing_class_macros__.push({ m => [args, block].compact })
     end
