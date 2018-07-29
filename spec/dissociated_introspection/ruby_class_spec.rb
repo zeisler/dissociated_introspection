@@ -286,13 +286,13 @@ RSpec.describe DissociatedIntrospection::RubyClass do
       end
 
       it "argument" do
-        expect(subject.defs.first.arguments).to eq "arg, named_arg:"
-        expect(subject.defs.last.arguments).to eq "arg = nil"
+        expect(subject.defs.first.arguments.to_s).to eq "arg, named_arg:"
+        expect(subject.defs.last.arguments.to_s).to eq "arg = nil"
       end
 
       it "body" do
-        expect(subject.defs.first.body).to eq "1 + 1"
-        expect(subject.defs.last.body).to eq "puts(\"hello\")"
+        expect(subject.defs.first.body.source).to eq "1 + 1"
+        expect(subject.defs.last.body.source).to eq "puts(\"hello\")"
       end
 
       it "source" do
@@ -350,15 +350,15 @@ RSpec.describe DissociatedIntrospection::RubyClass do
       end
 
       it "argument" do
-        expect(subject.class_defs.first.arguments).to eq "arg, named_arg:"
-        expect(subject.class_defs[1].arguments).to eq "arg = nil"
-        expect(subject.class_defs[2].arguments).to eq "**args"
+        expect(subject.class_defs.first.arguments.to_s).to eq "arg, named_arg:"
+        expect(subject.class_defs[1].arguments.to_s).to eq "arg = nil"
+        expect(subject.class_defs[2].arguments.to_s).to eq "**args"
       end
 
       it "body" do
-        expect(subject.class_defs.first.body).to eq "1 + 1"
-        expect(subject.class_defs[1].body).to eq "puts(\"hello\")"
-        expect(subject.class_defs[2].body).to eq "puts(\"goodbye\")"
+        expect(subject.class_defs.first.body.source).to eq "1 + 1"
+        expect(subject.class_defs[1].body.to_s).to eq "puts(\"hello\")"
+        expect(subject.class_defs[2].body.to_s).to eq "puts(\"goodbye\")"
       end
 
       it "source" do
@@ -382,8 +382,8 @@ RSpec.describe DissociatedIntrospection::RubyClass do
 
         it "class_defs" do
           expect(subject.class_defs.first.name).to eq :foo
-          expect(subject.class_defs.first.arguments).to eq ""
-          expect(subject.class_defs.first.body).to eq ":buz"
+          expect(subject.class_defs.first.arguments.to_s).to eq ""
+          expect(subject.class_defs.first.body.to_s).to eq ":buz"
         end
       end
 

@@ -52,6 +52,7 @@ module DissociatedIntrospection
     def source
       @source = @source.nil? ? source_from_ast : @source
     end
+    alias_method :to_s, :source
 
     # @return [String]
     def source_from_ast
