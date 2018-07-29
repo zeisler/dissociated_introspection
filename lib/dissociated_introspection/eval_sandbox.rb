@@ -11,7 +11,7 @@ module DissociatedIntrospection
     def call
       module_namespace.module_eval(recording_parent.read, recording_parent.path)
       module_namespace.module_eval(file.read, file.path)
-      module_namespace.const_get(module_namespace.constants.last)
+      module_namespace.const_get(module_namespace.constants.select{|c| c != :RecordingParent}.last)
     end
 
     def constants

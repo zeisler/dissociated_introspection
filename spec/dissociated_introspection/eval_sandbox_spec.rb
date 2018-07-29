@@ -4,6 +4,7 @@ RSpec.describe DissociatedIntrospection::EvalSandbox do
   let(:klass_example) {
     <<-RUBY
     class User
+      CONSTANT = true
       def first_name
       end
     end
@@ -13,7 +14,6 @@ RSpec.describe DissociatedIntrospection::EvalSandbox do
   let(:file) { instance_double(File, read: klass_example, path: __FILE__) }
 
   describe 'new' do
-
     it 'returns a class that responds to first_name' do
       expect(described_class.new(file: file).call.new.respond_to?(:first_name)).to eq(true)
     end
