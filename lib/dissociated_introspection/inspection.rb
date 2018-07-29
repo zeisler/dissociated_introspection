@@ -1,8 +1,8 @@
 require 'ostruct'
+require "pathname"
 
 module DissociatedIntrospection
   class Inspection
-
     # @param file [File]
     # @optional parent_class_replacement [Symbol]
     def initialize(file:, parent_class_replacement: :RecordingParent)

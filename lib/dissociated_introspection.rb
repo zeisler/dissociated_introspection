@@ -1,5 +1,6 @@
 require 'parser/current'
 require 'unparser'
+require 'forwardable'
 require 'dissociated_introspection/version'
 require 'dissociated_introspection/try'
 require 'dissociated_introspection/eval_sandbox'
