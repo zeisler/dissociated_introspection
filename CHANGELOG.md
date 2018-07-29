@@ -1,6 +1,15 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 0.10.0 -2018-07-28
+### Fix
+- Require Ruby core lib resources. (Forwardable, Pathname)
+- Deal with change in how Ruby order's it's constants.
+### Enhancement
+- RubyClass::Def methods return RubyCode object so that AST could be inspected
+### Deprecation
+- Dropping support for Ruby version 2.1
+
 ## 0.9.1 - 2018-01-16
 ### Fix
 - `DissociatedIntrospection::RubyClass#class_begin` added back to public API
