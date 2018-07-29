@@ -4,6 +4,7 @@ module DissociatedIntrospection
     extend Forwardable
     using Try
 
+    # @param [DissociatedIntrospection::RubyCode, String, Parse::AST, Hash{source: String, parse_with_comments: [Boolean]}] ruby_code
     def initialize(ruby_code)
       @ruby_code = if ruby_code.is_a?(Hash) && ruby_code.key?(:source)
                      RubyCode.build_from_source(
@@ -64,12 +65,12 @@ module DissociatedIntrospection
       self.class.new(RubyCode.build_from_ast(new_ast, comments: comments))
     end
 
-    # @return [DissociatedIntrospection::RubyClass::Def]
+    # @return [Array<DissociatedIntrospection::RubyClass::Def>]
     def defs
       class_begin.children.select { |n| n.try(:type) == :def }.map(&method(:create_def))
     end
 
-    # @return [DissociatedIntrospection::RubyClass::Def]
+    # @return [Array<DissociatedIntrospection::RubyClass::Def>]
     def class_defs
       ns = class_begin.children.select { |n| :defs == n.try(:type) }.map do |n|
         create_def(n.updated(:def, n.children[1..-1]))
@@ -81,6 +82,7 @@ module DissociatedIntrospection
       [*ns, *ns2]
     end
 
+    # @private
     def inspect_methods(type=:instance_methods)
       public_send(if type == :instance_methods
                     :defs
