@@ -158,7 +158,7 @@ module DissociatedIntrospection
     end
 
     def find_class
-      depth_first_search(ast, :class)
+      depth_first_search(ast, :class) || ast
     end
 
     def depth_first_search(node, target, stop=nil)
