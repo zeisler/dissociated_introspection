@@ -20,12 +20,21 @@ module DissociatedIntrospection
       attr_accessor :defs
 
       def on_send(node)
+        if (result = in_line_calls(node))
+          result
+        else
+          super
+        end
+      end
+
+      def in_line_calls(node)
         called_on, method_name, *args = *node
         # TODO: Deal with args by replacing lvar with passed objects
-        return super unless args.empty? && called_on_self?(called_on)
+        return unless args.empty? && called_on_self?(called_on)
         called_method = called_method(method_name)
-        return super unless called_method
-        node.updated(called_method.body.ast.type, called_method.body.ast.children)
+        return unless called_method
+        processed_called_method = process(called_method.body.ast)
+        node.updated(processed_called_method.type, processed_called_method.children)
       end
 
       def called_on_self?(called_on)

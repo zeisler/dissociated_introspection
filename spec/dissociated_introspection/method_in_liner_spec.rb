@@ -48,7 +48,7 @@ RSpec.describe DissociatedIntrospection::MethodInLiner do
   it "replaces local method calls with body from called method" do
     expect(subject.defs.first.name).to eq :run
     in_line_local_method_calls = subject.in_line
-    ruby_in_lined_class = DissociatedIntrospection::RubyClass.new(in_line_local_method_calls)
+    ruby_in_lined_class        = DissociatedIntrospection::RubyClass.new(in_line_local_method_calls)
     expect(ruby_in_lined_class.defs[0].body.source).to eq "\"done\""
     expect(ruby_in_lined_class.defs[1].body.source).to eq "\"done\""
     expect(ruby_in_lined_class.defs[2].body.source).to eq "puts(\"I'm not friends with the other methods\")"
@@ -56,5 +56,45 @@ RSpec.describe DissociatedIntrospection::MethodInLiner do
     expect(ruby_in_lined_class.defs[4].body.source).to eq "other.work"
     expect(ruby_in_lined_class.defs[5].body.source).to eq "\"done\""
     expect(ruby_in_lined_class.defs[7].body.source).to eq "work2(1)"
+  end
+
+  context "nested methods" do
+    let(:ruby_code_str) {
+      <<-RUBY
+      class BankruptcyRule
+        def eligible?
+          in_bankruptcy? || recent_bankruptcy?
+        end
+  
+        def in_bankruptcy?
+          bankruptcies.any? do |bankruptcy|
+            bankruptcy.closed_date.nil?
+          end
+        end
+  
+        def recent_bankruptcy?
+          bankruptcies.any? do |bankruptcy|
+            bankruptcy.closed_date > 2.years.ago
+          end
+        end
+  
+        def bankruptcies
+          public_records.select(&:bankruptcy)
+        end
+      end
+      RUBY
+    }
+
+    it "recursively in lines methods" do
+      in_line_local_method_calls = subject.in_line
+      ruby_in_lined_class        = DissociatedIntrospection::RubyClass.new(in_line_local_method_calls)
+      expect(ruby_in_lined_class.defs[0].body.source).to eq <<-RUBY[0..-2]
+public_records.select(&:bankruptcy).any? do |bankruptcy|
+  bankruptcy.closed_date.nil?
+end || public_records.select(&:bankruptcy).any? do |bankruptcy|
+  bankruptcy.closed_date > 2.years.ago
+end
+      RUBY
+    end
   end
 end
