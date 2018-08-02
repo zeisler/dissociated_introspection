@@ -8,7 +8,7 @@ RSpec.describe DissociatedIntrospection::MethodInLiner do
   let(:ruby_code) { DissociatedIntrospection::RubyCode.build_from_source(ruby_code_str) }
   let(:defs) { DissociatedIntrospection::RubyClass.new(ruby_code).defs }
   let(:ruby_code_str) {
-    <<~RUBY
+    <<-RUBY
         class A
           def run
             work
