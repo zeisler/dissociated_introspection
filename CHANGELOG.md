@@ -1,7 +1,11 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## 0.10.0 -2018-07-28
+## 0.11.0 - 2018-08-01
+### Enhancement
+- Ability to Inline local methods with the exception of ones with arguments passed.
+
+## 0.10.0 - 2018-07-28
 ### Fix
 - Require Ruby core lib resources. (Forwardable, Pathname)
 - Deal with change in how Ruby order's it's constants.
