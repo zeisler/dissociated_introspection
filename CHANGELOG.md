@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## 0.12.0 - 2018-08-02
+### Enhancement
+- MethodInLiner will now recursively in-lines methods.
+
 ## 0.11.0 - 2018-08-01
 ### Enhancement
 - Ability to Inline local methods with the exception of ones with arguments passed.
