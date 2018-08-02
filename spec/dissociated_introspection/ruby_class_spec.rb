@@ -248,9 +248,9 @@ RSpec.describe DissociatedIntrospection::RubyClass do
       expect(subject.class?).to eq false
     end
   end
-  
+
   describe "defs" do
-    let(:ruby_class){
+    let(:ruby_class) {
       <<-RUBY
       class A
         def method1(arg, named_arg:)
@@ -267,10 +267,10 @@ RSpec.describe DissociatedIntrospection::RubyClass do
 
     subject {
       described_class.new(
-        DissociatedIntrospection::RubyCode.build_from_source(
-          ruby_class,
-          parse_with_comments: true
-        )
+          DissociatedIntrospection::RubyCode.build_from_source(
+              ruby_class,
+              parse_with_comments: true
+          )
       )
     }
 
@@ -310,7 +310,7 @@ RSpec.describe DissociatedIntrospection::RubyClass do
   end
 
   describe "class_defs" do
-    let(:ruby_class){
+    let(:ruby_class) {
       <<-RUBY
       class A
         # my comment
@@ -334,15 +334,14 @@ RSpec.describe DissociatedIntrospection::RubyClass do
 
     subject {
       described_class.new(
-        DissociatedIntrospection::RubyCode.build_from_source(
-          ruby_class,
-          parse_with_comments: true
-        )
+          DissociatedIntrospection::RubyCode.build_from_source(
+              ruby_class,
+              parse_with_comments: true
+          )
       )
     }
 
     describe "Def object" do
-
       it "name" do
         expect(subject.class_defs.first.name).to eq :method1
         expect(subject.class_defs[1].name).to eq :method2
@@ -362,13 +361,13 @@ RSpec.describe DissociatedIntrospection::RubyClass do
       end
 
       it "source" do
-        expect(subject.class_defs.first.source).to eq "# my comment\ndef method1(arg, named_arg:)\n  1 + 1\nend"
+        expect(subject.class_defs.first.to_s).to eq "# my comment\ndef method1(arg, named_arg:)\n  1 + 1\nend"
         expect(subject.class_defs[1].source).to eq "# This is a comment\ndef method2(arg = nil)\n  puts(\"hello\")\nend"
         expect(subject.class_defs[2].source).to eq "def method3(**args)\n  puts(\"goodbye\")\nend"
       end
 
       context "single method" do
-        let(:ruby_class){
+        let(:ruby_class) {
           <<-RUBY
           class A
             class << self
@@ -398,7 +397,7 @@ RSpec.describe DissociatedIntrospection::RubyClass do
   end
 
   describe "#scrub_inner_classes" do
-    let(:ruby_class){
+    let(:ruby_class) {
       <<-RUBY
       require "bla"
       class A

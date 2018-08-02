@@ -26,6 +26,10 @@ module DissociatedIntrospection
         ruby_code.source
       end
 
+      def to_s
+        ruby_code.source
+      end
+
       # @return [Parser::AST]
       def ast
         ruby_code.ast

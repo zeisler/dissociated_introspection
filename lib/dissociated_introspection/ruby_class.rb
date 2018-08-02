@@ -145,10 +145,7 @@ module DissociatedIntrospection
     private
 
     def create_def(n)
-      def_comments = comments.select do |comment|
-        comment.location.last_line+1 == n.location.first_line
-      end
-      Def.new(RubyCode.build_from_ast(n, comments: def_comments))
+      CreateDef.new(n, comments).create
     end
 
     def scrub_inner_classes_ast
