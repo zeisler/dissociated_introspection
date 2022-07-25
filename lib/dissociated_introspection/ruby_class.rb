@@ -162,11 +162,9 @@ module DissociatedIntrospection
       return false unless node.is_a?(Parser::AST::Node)
       return node if node.type == target
       return false if stop && node.type == stop
-      if (children = node.children)
-        children.each do |kid|
-          v = depth_first_search(kid, target, stop)
-          return v if v.is_a?(Parser::AST::Node)
-        end
+      [*node.children].each do |kid|
+        v = depth_first_search(kid, target, stop)
+        return v if v.is_a?(Parser::AST::Node)
       end
       false
     end

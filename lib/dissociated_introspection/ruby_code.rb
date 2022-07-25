@@ -1,6 +1,5 @@
 module DissociatedIntrospection
   class RubyCode
-
     # @param [String] source
     # @param [true, false] parse_with_comments
     # @return [DissociatedIntrospection::RubyCode]

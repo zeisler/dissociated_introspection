@@ -279,7 +279,6 @@ RSpec.describe DissociatedIntrospection::RubyClass do
     end
 
     describe "Def object" do
-
       it "name" do
         expect(subject.defs.first.name).to eq :method1
         expect(subject.defs.last.name).to eq :method2
@@ -437,7 +436,7 @@ RSpec.describe DissociatedIntrospection::RubyClass do
     subject { described_class.new(source: ruby_class) }
 
     it "RubyCode object of defined nested modules" do
-      expect(subject.defined_nested_modules.map(&:source)).to eq(["module MyError\n  def hello\n    :good_day\n  end\nend"])
+      expect(subject.defined_nested_modules.map(&:source).map(&:chomp)).to eq(["module MyError\n  def hello\n    :good_day\n  end\nend"])
     end
   end
 

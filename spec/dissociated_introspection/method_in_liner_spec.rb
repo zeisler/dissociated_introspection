@@ -89,9 +89,9 @@ RSpec.describe DissociatedIntrospection::MethodInLiner do
       in_line_local_method_calls = subject.in_line
       ruby_in_lined_class        = DissociatedIntrospection::RubyClass.new(in_line_local_method_calls)
       expect(ruby_in_lined_class.defs[0].body.source).to eq <<-RUBY[0..-2]
-public_records.select(&:bankruptcy).any? do |bankruptcy|
+public_records.select(&:bankruptcy).any? do |bankruptcy, |
   bankruptcy.closed_date.nil?
-end || public_records.select(&:bankruptcy).any? do |bankruptcy|
+end || public_records.select(&:bankruptcy).any? do |bankruptcy, |
   bankruptcy.closed_date > 2.years.ago
 end
       RUBY
